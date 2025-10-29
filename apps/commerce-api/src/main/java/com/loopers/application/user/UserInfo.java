@@ -10,7 +10,7 @@ public record UserInfo(Long id, String loginId, String email, LocalDate birthDat
                 user.getLoginId(),
                 user.getEmail(),
                 user.getBirthDate(),
-                user.getGender()
+                user.getGender().getCode()
         );
     }
 }
