@@ -36,7 +36,7 @@ public class User extends BaseEntity {
         return User.builder()
                 .loginId(signupCommand.loginId())
                 .email(signupCommand.email())
-                .birthDate(signupCommand.birthDate())
+                .birthDate(LocalDate.parse(signupCommand.birthDate()))
                 .gender(signupCommand.gender())
                 .build();
     }
