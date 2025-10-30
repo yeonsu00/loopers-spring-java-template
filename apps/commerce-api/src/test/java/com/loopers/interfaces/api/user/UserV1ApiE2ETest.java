@@ -368,4 +368,73 @@ class UserV1ApiE2ETest {
             assertThat(userJpaRepository.count()).isEqualTo(1);
         }
     }
+
+    @DisplayName("GET /api/v1/users - 내 정보 조회")
+    @Nested
+    class GetUserInfo {
+
+        private static final String ENDPOINT_GET_USER_INFO = "/api/v1/users";
+
+        @DisplayName("내 정보 조회에 성공할 경우, 해당하는 유저 정보를 응답으로 반환한다.")
+        @Test
+        void returnsUserInfo_whenUserExists() {
+            // arrange
+            UserV1Dto.SignupRequest signupRequest = new UserV1Dto.SignupRequest(
+                    "testId123",
+                    "test@test.com",
+                    "2000-03-29",
+                    "F"
+            );
+            ResponseEntity<ApiResponse<UserV1Dto.UserResponse>> signupResponse = testRestTemplate.exchange(
+                    ENDPOINT_SIGNUP,
+                    HttpMethod.POST,
+                    new HttpEntity<>(signupRequest),
+                    new ParameterizedTypeReference<>() {}
+            );
+            assertNotNull(signupResponse.getBody());
+            Long userId = signupResponse.getBody().data().id();
+
+            String requestUrl = ENDPOINT_GET_USER_INFO + "?loginId=testId123";
+
+            // act
+            ResponseEntity<ApiResponse<UserV1Dto.UserResponse>> response = testRestTemplate.exchange(
+                    requestUrl,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<>() {}
+            );
+
+            // assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().meta().result()).isEqualTo(ApiResponse.Metadata.Result.SUCCESS);
+
+            UserV1Dto.UserResponse userResponse = response.getBody().data();
+            assertAll(
+                    () -> assertThat(userResponse.id()).isEqualTo(userId),
+                    () -> assertThat(userResponse.loginId()).isEqualTo("testId123"),
+                    () -> assertThat(userResponse.email()).isEqualTo("test@test.com"),
+                    () -> assertThat(userResponse.birthDate()).isEqualTo("2000-03-29"),
+                    () -> assertThat(userResponse.gender()).isEqualTo("F")
+            );
+        }
+
+        @DisplayName("존재하지 않는 ID로 조회할 경우, 404 Not Found 응답을 반환한다.")
+        @Test
+        void returns404_whenUserDoesNotExist() {
+            // arrange
+            String requestUrl = ENDPOINT_GET_USER_INFO + "?loginId=nonExistent";
+
+            // act
+            ResponseEntity<String> response = testRestTemplate.exchange(
+                    requestUrl,
+                    HttpMethod.GET,
+                    null,
+                    String.class
+            );
+
+            // assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        }
+    }
 }
