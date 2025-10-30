@@ -10,6 +10,7 @@ import com.loopers.application.point.PointFacade;
 import com.loopers.application.point.PointInfo;
 import com.loopers.application.user.UserCommand.SignupCommand;
 import com.loopers.domain.user.UserService;
+import java.util.Optional;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
@@ -27,7 +28,7 @@ class PointServiceIntegrationTest {
     @Autowired
     private PointFacade pointFacade;
 
-    @Autowired
+    @MockitoSpyBean
     private UserService userService;
 
     @MockitoSpyBean
@@ -53,6 +54,8 @@ class PointServiceIntegrationTest {
             Integer chargeAmount = 1000;
             PointCommand.ChargeCommand command = new PointCommand.ChargeCommand(nonExistentLoginId, chargeAmount);
 
+            doReturn(Optional.empty()).when(userService).getUserByLoginId(nonExistentLoginId);
+
             // act & assert
             CoreException exception = assertThrows(CoreException.class, () -> {
                 pointFacade.chargePoint(command);
@@ -62,6 +65,7 @@ class PointServiceIntegrationTest {
             assertThat(exception.getMessage()).contains("사용자를 찾을 수 없습니다");
 
             // verify
+            verify(userService, times(1)).getUserByLoginId(nonExistentLoginId);
             verify(pointRepository, never()).save(any(Point.class));
         }
 
@@ -140,14 +144,19 @@ class PointServiceIntegrationTest {
             assertThat(pointInfo.totalPoint()).isEqualTo(1200);
         }
 
-        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, null을 반환한다.")
+        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, null을 반환해 Not Found 예외가 발생한다.")
         @Test
         void returnsEmpty_whenUserDoesNotExist() {
             // arrange
             String nonExistentLoginId = "nonExistent";
+            PointCommand.ChargeCommand command = new PointCommand.ChargeCommand(nonExistentLoginId, 1000);
 
             // act & assert
-            assertThat(pointFacade.getPointInfo(nonExistentLoginId)).isNull();
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                pointFacade.chargePoint(command);
+            });
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+            verify(userService, times(1)).getUserByLoginId(nonExistentLoginId);
         }
     }
 }
