@@ -10,6 +10,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import com.loopers.utils.DatabaseCleanUp;
 import java.time.LocalDate;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -120,6 +121,46 @@ class UserServiceIntegrationTest {
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
             assertThat(exception.getMessage()).contains("이미 가입된 이메일입니다.");
+        }
+    }
+
+    @DisplayName("내 정보 조회할 때,")
+    @Nested
+    class GetUserInfo {
+
+        @DisplayName("해당 ID의 회원이 존재할 경우, 회원 정보가 반환된다.")
+        @Test
+        void returnsUserInfo_whenUserExists() {
+            // arrange
+            SignupCommand command = new SignupCommand(
+                    "testId123",
+                    "test@test.com",
+                    "2000-03-29",
+                    "F"
+            );
+
+            userService.signup(command);
+
+            // act
+            Optional<User> optionalUser = userService.getUserByLoginId("testId123");
+
+            // assert
+            assertThat(optionalUser).isPresent();
+            User result = optionalUser.get();
+            assertThat(result).isInstanceOf(User.class);
+        }
+
+        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, null이 반환된다.")
+        @Test
+        void returnsEmpty_whenUserDoesNotExist() {
+            // arrange
+            String nonExistentLoginId = "nonExistentLoginId";
+
+            // act
+            Optional<User> result = userService.getUserByLoginId(nonExistentLoginId);
+
+            // assert
+            assertThat(result).isEmpty();
         }
     }
 }
