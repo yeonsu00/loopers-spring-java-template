@@ -113,4 +113,41 @@ class PointServiceIntegrationTest {
             assertThat(pointInfo.totalPoint()).isEqualTo(1500);
         }
     }
+    
+    @DisplayName("포인트를 조회할 때,")
+    @Nested
+    class GetPoint {
+
+        @DisplayName("해당 ID의 회원이 존재할 경우, 보유 포인트가 반환된다.")
+        @Test
+        void returnsPoint_whenUserExists() {
+            // arrange
+            SignupCommand signupCommand = new SignupCommand(
+                    "testId123",
+                    "test@test.com",
+                    "2000-03-29",
+                    "F"
+            );
+            userService.signup(signupCommand);
+
+            PointCommand.ChargeCommand chargeCommand = new PointCommand.ChargeCommand("testId123", 1200);
+            pointFacade.chargePoint(chargeCommand);
+
+            // act
+            PointInfo pointInfo = pointFacade.getPointInfo("testId123");
+
+            // assert
+            assertThat(pointInfo.totalPoint()).isEqualTo(1200);
+        }
+
+        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, null을 반환한다.")
+        @Test
+        void returnsEmpty_whenUserDoesNotExist() {
+            // arrange
+            String nonExistentLoginId = "nonExistent";
+
+            // act & assert
+            assertThat(pointFacade.getPointInfo(nonExistentLoginId)).isNull();
+        }
+    }
 }
