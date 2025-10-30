@@ -23,4 +23,14 @@ public class PointFacade {
         Point point = pointService.chargePoint(user.getId(), chargeCommand.chargePoint());
         return PointInfo.from(point);
     }
+
+    public PointInfo getPointInfo(String loginId) {
+        User user = userService.getUserByLoginId(loginId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, loginId + " 사용자를 찾을 수 없습니다."));
+
+        Point point = pointService.getPointByUserId(user.getId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, loginId + " 사용자의 포인트 정보를 찾을 수 없습니다."));
+
+        return PointInfo.from(point);
+    }
 }
