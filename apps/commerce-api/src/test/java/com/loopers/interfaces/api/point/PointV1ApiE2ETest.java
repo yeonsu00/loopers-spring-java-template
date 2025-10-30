@@ -151,4 +151,70 @@ class PointV1ApiE2ETest {
             assertThat(pointResponse.totalPoint()).isEqualTo(1500);
         }
     }
+
+    @DisplayName("GET /api/v1/point - 포인트 조회")
+    @Nested
+    class GetPointInfo {
+
+        @DisplayName("포인트 조회에 성공할 경우, 보유 포인트를 응답으로 반환한다.")
+        @Test
+        void returnsPointInfo_whenUserExists() {
+            // arrange
+            SignupCommand signupCommand = new SignupCommand(
+                    "testId123",
+                    "test@test.com",
+                    "2000-03-29",
+                    "F"
+            );
+            User user = userService.signup(signupCommand);
+
+            PointV1Dto.PointRequest chargeRequest = new PointV1Dto.PointRequest(1200);
+            HttpHeaders chargeHeaders = new HttpHeaders();
+            chargeHeaders.set("X-USER-ID", user.getLoginId());
+
+            testRestTemplate.exchange(
+                    ENDPOINT_CHARGE_POINT,
+                    HttpMethod.POST,
+                    new HttpEntity<>(chargeRequest, chargeHeaders),
+                    new ParameterizedTypeReference<ApiResponse<PointV1Dto.PointResponse>>() {}
+            );
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-USER-ID", user.getLoginId());
+
+            // act
+            ResponseEntity<ApiResponse<PointV1Dto.PointResponse>> response = testRestTemplate.exchange(
+                    ENDPOINT_CHARGE_POINT,
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    new ParameterizedTypeReference<>() {}
+            );
+
+            // assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isNotNull();
+            assertThat(response.getBody().meta().result()).isEqualTo(ApiResponse.Metadata.Result.SUCCESS);
+
+            PointV1Dto.PointResponse pointResponse = response.getBody().data();
+            assertThat(pointResponse.totalPoint()).isEqualTo(1200);
+        }
+
+        @DisplayName("X-USER-ID 헤더가 없을 경우, 400 Bad Request 응답을 반환한다.")
+        @Test
+        void returns400_whenXUserIdHeaderIsMissing() {
+            // arrange
+            HttpHeaders headers = new HttpHeaders();
+
+            // act
+            ResponseEntity<String> response = testRestTemplate.exchange(
+                    ENDPOINT_CHARGE_POINT,
+                    HttpMethod.GET,
+                    new HttpEntity<>(headers),
+                    String.class
+            );
+
+            // assert
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+    }
 }
