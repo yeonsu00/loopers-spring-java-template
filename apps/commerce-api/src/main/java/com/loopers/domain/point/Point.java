@@ -3,6 +3,7 @@ package com.loopers.domain.point;
 import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Builder;
@@ -13,8 +14,10 @@ import lombok.Getter;
 @Getter
 public class Point extends BaseEntity {
 
+    @Column(nullable = false, unique = true)
     private Long userId;
 
+    @Column(nullable = false)
     private Integer amount;
 
     @Builder

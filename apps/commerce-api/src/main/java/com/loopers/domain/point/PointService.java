@@ -12,17 +12,22 @@ public class PointService {
     private final PointRepository pointRepository;
 
     @Transactional
-    public Point chargePoint(Long id, Integer chargePoint) {
-        Optional<Point> point = pointRepository.findByUserId(id);
+    public Point chargePoint(Long userId, Integer chargePoint) {
+        Optional<Point> point = pointRepository.findByUserId(userId);
 
         if (point.isPresent()) {
             Point existingPoint = point.get();
             existingPoint.charge(chargePoint);
             return existingPoint;
         } else {
-            Point newPoint = Point.createPoint(id);
+            Point newPoint = Point.createPoint(userId);
             newPoint.charge(chargePoint);
             return pointRepository.save(newPoint);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Point> getPointByUserId(Long userId) {
+        return pointRepository.findByUserId(userId);
     }
 }
