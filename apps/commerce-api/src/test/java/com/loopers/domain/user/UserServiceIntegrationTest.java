@@ -90,8 +90,36 @@ class UserServiceIntegrationTest {
                 userService.signup(duplicateCommand);
             });
 
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
-            assertThat(exception.getMessage()).contains("이미 사용중인 로그인 ID입니다.");
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+            assertThat(exception.getMessage()).contains("이미 가입된 ID입니다.");
+        }
+
+        @DisplayName("이미 가입된 이메일로 회원가입 시도 시 실패한다.")
+        @Test
+        void throwsException_whenEmailAlreadyExists() {
+            // arrange
+            SignupCommand command = new SignupCommand(
+                    "testId123",
+                    "test@test.com",
+                    "2000-03-29",
+                    "M"
+            );
+            userService.signup(command);
+
+            SignupCommand duplicateCommand = new SignupCommand(
+                    "testId456",
+                    "test@test.com",
+                    "2000-01-23",
+                    "F"
+            );
+
+            // act & assert
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                userService.signup(duplicateCommand);
+            });
+
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+            assertThat(exception.getMessage()).contains("이미 가입된 이메일입니다.");
         }
     }
 }
