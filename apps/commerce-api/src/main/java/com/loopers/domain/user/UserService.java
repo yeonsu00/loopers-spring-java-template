@@ -16,11 +16,11 @@ public class UserService {
     @Transactional
     public User signup(SignupCommand signupCommand) {
         if (userRepository.existsByLoginId(signupCommand.loginId())) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "이미 가입된 ID입니다.");
+            throw new CoreException(ErrorType.CONFLICT, "이미 가입된 ID입니다.");
         }
 
         if (userRepository.existsByEmail(signupCommand.email())) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "이미 가입된 이메일입니다.");
+            throw new CoreException(ErrorType.CONFLICT, "이미 가입된 이메일입니다.");
         }
 
         User user = User.createUser(signupCommand);

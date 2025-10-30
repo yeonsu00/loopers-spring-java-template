@@ -90,7 +90,7 @@ class UserServiceIntegrationTest {
                 userService.signup(duplicateCommand);
             });
 
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
             assertThat(exception.getMessage()).contains("이미 가입된 ID입니다.");
         }
 
@@ -118,7 +118,7 @@ class UserServiceIntegrationTest {
                 userService.signup(duplicateCommand);
             });
 
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.CONFLICT);
             assertThat(exception.getMessage()).contains("이미 가입된 이메일입니다.");
         }
     }
