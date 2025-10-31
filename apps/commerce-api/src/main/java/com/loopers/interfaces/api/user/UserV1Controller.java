@@ -1,6 +1,6 @@
 package com.loopers.interfaces.api.user;
 
-import com.loopers.application.user.UserCommand.SignupCommand;
+import com.loopers.application.user.UserCommand;
 import com.loopers.application.user.UserFacade;
 import com.loopers.application.user.UserInfo;
 import com.loopers.interfaces.api.ApiResponse;
@@ -25,7 +25,7 @@ public class UserV1Controller implements UserV1ApiSpec {
     public ApiResponse<UserV1Dto.UserResponse> signup(
             @Valid @RequestBody UserV1Dto.SignupRequest signupRequest
     ) {
-        SignupCommand signupCommand = SignupCommand.from(signupRequest);
+        UserCommand.SignupCommand signupCommand = UserCommand.SignupCommand.from(signupRequest);
         UserInfo userInfo = userFacade.signup(signupCommand);
         UserV1Dto.UserResponse response = UserV1Dto.UserResponse.from(userInfo);
 

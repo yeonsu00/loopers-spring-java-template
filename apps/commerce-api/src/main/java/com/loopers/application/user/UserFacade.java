@@ -1,6 +1,5 @@
 package com.loopers.application.user;
 
-import com.loopers.application.user.UserCommand.SignupCommand;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
@@ -14,7 +13,7 @@ public class UserFacade {
 
     private final UserService userService;
 
-    public UserInfo signup(SignupCommand signupCommand) {
+    public UserInfo signup(UserCommand.SignupCommand signupCommand) {
         User savedUser = userService.signup(signupCommand);
         return UserInfo.from(savedUser);
     }

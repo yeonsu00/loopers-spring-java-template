@@ -1,6 +1,6 @@
 package com.loopers.domain.user;
 
-import com.loopers.application.user.UserCommand.SignupCommand;
+import com.loopers.application.user.UserCommand;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.Optional;
@@ -15,7 +15,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional
-    public User signup(SignupCommand signupCommand) {
+    public User signup(UserCommand.SignupCommand signupCommand) {
         if (userRepository.existsByLoginId(signupCommand.loginId())) {
             throw new CoreException(ErrorType.CONFLICT, "이미 가입된 ID입니다.");
         }
