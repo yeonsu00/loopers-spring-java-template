@@ -144,7 +144,7 @@ class PointServiceIntegrationTest {
             assertThat(pointInfo.totalPoint()).isEqualTo(1200);
         }
 
-        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, null을 반환해 Not Found 예외가 발생한다.")
+        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, Not Found 예외가 발생한다.")
         @Test
         void returnsEmpty_whenUserDoesNotExist() {
             // arrange
