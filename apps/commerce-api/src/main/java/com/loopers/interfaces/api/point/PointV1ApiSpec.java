@@ -21,7 +21,7 @@ public interface PointV1ApiSpec {
     );
 
     ApiResponse<PointV1Dto.PointResponse> getPointInfo(
-            @Schema(name = "로그인 ID", description = "포인트를 충전할 사용자의 로그인 ID")
+            @Schema(name = "로그인 ID", description = "포인트를 조회할 사용자의 로그인 ID")
             String loginId
     );
 
