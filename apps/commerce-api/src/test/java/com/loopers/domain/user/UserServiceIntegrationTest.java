@@ -152,7 +152,7 @@ class UserServiceIntegrationTest {
 
         @DisplayName("해당 ID의 회원이 존재하지 않을 경우, 빈 Optional이 반환된다.")
         @Test
-        void returnsEmpty_whenUserDoesNotExist() {
+        void returnsOptional_whenUserDoesNotExist() {
             // arrange
             String nonExistentLoginId = "nonExistentLoginId";
 

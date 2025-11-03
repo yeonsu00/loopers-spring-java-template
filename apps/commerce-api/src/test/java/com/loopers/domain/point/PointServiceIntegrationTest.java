@@ -146,7 +146,7 @@ class PointServiceIntegrationTest {
 
         @DisplayName("해당 ID의 회원이 존재하지 않을 경우, Not Found 예외가 발생한다.")
         @Test
-        void returnsEmpty_whenUserDoesNotExist() {
+        void throwsException_whenUserDoesNotExist() {
             // arrange
             String nonExistentLoginId = "nonExistent";
             PointCommand.ChargeCommand command = new PointCommand.ChargeCommand(nonExistentLoginId, 1000);
