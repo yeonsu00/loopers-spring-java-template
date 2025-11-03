@@ -25,7 +25,7 @@ public class UserV1Controller implements UserV1ApiSpec {
     public ApiResponse<UserV1Dto.UserResponse> signup(
             @Valid @RequestBody UserV1Dto.SignupRequest signupRequest
     ) {
-        UserCommand.SignupCommand signupCommand = UserCommand.SignupCommand.from(signupRequest);
+        UserCommand.SignupCommand signupCommand = signupRequest.toCommand();
         UserInfo userInfo = userFacade.signup(signupCommand);
         UserV1Dto.UserResponse response = UserV1Dto.UserResponse.from(userInfo);
 

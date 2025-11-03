@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.user;
 
+import com.loopers.application.user.UserCommand;
 import com.loopers.application.user.UserInfo;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -20,6 +21,14 @@ public class UserV1Dto {
             @NotBlank(message = "성별은 필수입니다")
             String gender
     ) {
+        public UserCommand.SignupCommand toCommand() {
+            return new UserCommand.SignupCommand(
+                    loginId,
+                    email,
+                    birthDate,
+                    gender
+            );
+        }
     }
 
     public record UserResponse(Long id, String loginId, String email, String birthDate, String gender) {

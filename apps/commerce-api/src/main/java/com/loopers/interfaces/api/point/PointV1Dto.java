@@ -10,8 +10,8 @@ public class PointV1Dto {
             @NotNull(message = "충전 포인트는 필수입니다.")
             Integer chargePoint
     ) {
-        public static PointCommand.ChargeCommand toCommand(String loginId, PointV1Dto.PointRequest request) {
-            return new PointCommand.ChargeCommand(loginId, request.chargePoint());
+        public PointCommand.ChargeCommand toCommand(String loginId) {
+            return new PointCommand.ChargeCommand(loginId, chargePoint);
         }
     }
 
