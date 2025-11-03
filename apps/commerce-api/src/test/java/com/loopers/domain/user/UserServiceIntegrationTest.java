@@ -150,7 +150,7 @@ class UserServiceIntegrationTest {
             assertThat(result).isInstanceOf(User.class);
         }
 
-        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, null이 반환된다.")
+        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, 빈 Optional이 반환된다.")
         @Test
         void returnsEmpty_whenUserDoesNotExist() {
             // arrange
