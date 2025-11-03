@@ -22,7 +22,7 @@ public enum Gender {
         return Arrays.stream(Gender.values())
                 .filter(gender -> gender.code.equals(code))
                 .findFirst()
-                .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, "유효하지 않은 성별 코드입니다. " + code));
+                .orElseThrow(() -> new CoreException(ErrorType.BAD_REQUEST, String.format("유효하지 않은 성별 코드입니다. %s", code)));
     }
 }
 
