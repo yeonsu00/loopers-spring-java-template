@@ -17,7 +17,7 @@ public class PointFacade {
     private final UserService userService;
 
     public PointInfo chargePoint(PointCommand.ChargeCommand chargeCommand) {
-        User user = userService.getUserByLoginId(chargeCommand.loginId())
+        User user = userService.findUserByLoginId(chargeCommand.loginId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, chargeCommand.loginId() + " 사용자를 찾을 수 없습니다."));
 
         Point point = pointService.chargePoint(user.getId(), chargeCommand.chargePoint());
@@ -25,7 +25,7 @@ public class PointFacade {
     }
 
     public PointInfo getPointInfo(String loginId) {
-        User user = userService.getUserByLoginId(loginId)
+        User user = userService.findUserByLoginId(loginId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, loginId + " 사용자를 찾을 수 없습니다."));
 
         Point point = pointService.getPointByUserId(user.getId())

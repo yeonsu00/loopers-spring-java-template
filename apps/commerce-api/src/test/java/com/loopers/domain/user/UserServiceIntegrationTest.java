@@ -57,9 +57,9 @@ class UserServiceIntegrationTest {
             // assert
             assertAll(
                     () -> assertThat(savedUser.getId()).isNotNull(),
-                    () -> assertThat(savedUser.getLoginId()).isEqualTo("testId123"),
-                    () -> assertThat(savedUser.getEmail()).isEqualTo("test@test.com"),
-                    () -> assertThat(savedUser.getBirthDate()).isEqualTo(LocalDate.of(2000, 3, 29)),
+                    () -> assertThat(savedUser.getLoginId().getId()).isEqualTo("testId123"),
+                    () -> assertThat(savedUser.getEmail().getAddress()).isEqualTo("test@test.com"),
+                    () -> assertThat(savedUser.getBirthDate().getDate()).isEqualTo(LocalDate.of(2000, 3, 29)),
                     () -> assertThat(savedUser.getGender()).isEqualTo(Gender.FEMALE)
             );
 
@@ -142,7 +142,7 @@ class UserServiceIntegrationTest {
             userService.signup(command);
 
             // act
-            Optional<User> optionalUser = userService.getUserByLoginId("testId123");
+            Optional<User> optionalUser = userService.findUserByLoginId("testId123");
 
             // assert
             assertThat(optionalUser).isPresent();
@@ -150,14 +150,14 @@ class UserServiceIntegrationTest {
             assertThat(result).isInstanceOf(User.class);
         }
 
-        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, null이 반환된다.")
+        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, 빈 Optional이 반환된다.")
         @Test
-        void returnsEmpty_whenUserDoesNotExist() {
+        void returnsOptional_whenUserDoesNotExist() {
             // arrange
             String nonExistentLoginId = "nonExistentLoginId";
 
             // act
-            Optional<User> result = userService.getUserByLoginId(nonExistentLoginId);
+            Optional<User> result = userService.findUserByLoginId(nonExistentLoginId);
 
             // assert
             assertThat(result).isEmpty();

@@ -34,9 +34,9 @@ class UserTest {
 
             // assert
             assertAll(
-                    () -> assertThat(user.getLoginId()).isEqualTo("testId123"),
-                    () -> assertThat(user.getEmail()).isEqualTo("test@test.com"),
-                    () -> assertThat(user.getBirthDate()).isEqualTo(LocalDate.of(2000, 3, 29)),
+                    () -> assertThat(user.getLoginId().getId()).isEqualTo("testId123"),
+                    () -> assertThat(user.getEmail().getAddress()).isEqualTo("test@test.com"),
+                    () -> assertThat(user.getBirthDate().getDate()).isEqualTo(LocalDate.of(2000, 3, 29)),
                     () -> assertThat(user.getGender()).isEqualTo(Gender.FEMALE)
             );
         }

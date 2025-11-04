@@ -29,7 +29,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<User> getUserByLoginId(String loginId) {
+    public Optional<User> findUserByLoginId(String loginId) {
         return userRepository.findByLoginId(loginId);
     }
 

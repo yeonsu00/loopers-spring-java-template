@@ -54,7 +54,7 @@ class PointServiceIntegrationTest {
             Integer chargeAmount = 1000;
             PointCommand.ChargeCommand command = new PointCommand.ChargeCommand(nonExistentLoginId, chargeAmount);
 
-            doReturn(Optional.empty()).when(userService).getUserByLoginId(nonExistentLoginId);
+            doReturn(Optional.empty()).when(userService).findUserByLoginId(nonExistentLoginId);
 
             // act & assert
             CoreException exception = assertThrows(CoreException.class, () -> {
@@ -65,7 +65,7 @@ class PointServiceIntegrationTest {
             assertThat(exception.getMessage()).contains("사용자를 찾을 수 없습니다");
 
             // verify
-            verify(userService, times(1)).getUserByLoginId(nonExistentLoginId);
+            verify(userService, times(1)).findUserByLoginId(nonExistentLoginId);
             verify(pointRepository, never()).save(any(Point.class));
         }
 
@@ -144,9 +144,9 @@ class PointServiceIntegrationTest {
             assertThat(pointInfo.totalPoint()).isEqualTo(1200);
         }
 
-        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, null을 반환해 Not Found 예외가 발생한다.")
+        @DisplayName("해당 ID의 회원이 존재하지 않을 경우, Not Found 예외가 발생한다.")
         @Test
-        void returnsEmpty_whenUserDoesNotExist() {
+        void throwsException_whenUserDoesNotExist() {
             // arrange
             String nonExistentLoginId = "nonExistent";
             PointCommand.ChargeCommand command = new PointCommand.ChargeCommand(nonExistentLoginId, 1000);
@@ -156,7 +156,7 @@ class PointServiceIntegrationTest {
                 pointFacade.chargePoint(command);
             });
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
-            verify(userService, times(1)).getUserByLoginId(nonExistentLoginId);
+            verify(userService, times(1)).findUserByLoginId(nonExistentLoginId);
         }
     }
 }

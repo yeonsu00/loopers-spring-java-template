@@ -28,7 +28,7 @@ public class PointV1Controller implements PointV1ApiSpec {
             @RequestHeader("X-USER-ID") String loginId,
             @Valid @RequestBody PointV1Dto.PointRequest pointRequest
     ) {
-        PointCommand.ChargeCommand chargeCommand = PointV1Dto.PointRequest.toCommand(loginId, pointRequest);
+        PointCommand.ChargeCommand chargeCommand = pointRequest.toCommand(loginId);
 
         PointInfo pointInfo = pointFacade.chargePoint(chargeCommand);
         PointV1Dto.PointResponse response = PointV1Dto.PointResponse.from(pointInfo);
