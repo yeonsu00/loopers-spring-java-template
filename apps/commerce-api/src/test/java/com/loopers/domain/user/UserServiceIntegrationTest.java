@@ -57,9 +57,9 @@ class UserServiceIntegrationTest {
             // assert
             assertAll(
                     () -> assertThat(savedUser.getId()).isNotNull(),
-                    () -> assertThat(savedUser.getLoginId()).isEqualTo("testId123"),
-                    () -> assertThat(savedUser.getEmail()).isEqualTo("test@test.com"),
-                    () -> assertThat(savedUser.getBirthDate()).isEqualTo(LocalDate.of(2000, 3, 29)),
+                    () -> assertThat(savedUser.getLoginId().getId()).isEqualTo("testId123"),
+                    () -> assertThat(savedUser.getEmail().getAddress()).isEqualTo("test@test.com"),
+                    () -> assertThat(savedUser.getBirthDate().getDate()).isEqualTo(LocalDate.of(2000, 3, 29)),
                     () -> assertThat(savedUser.getGender()).isEqualTo(Gender.FEMALE)
             );
 

@@ -65,7 +65,7 @@ class PointV1ApiE2ETest {
             PointV1Dto.PointRequest request = new PointV1Dto.PointRequest(1000);
 
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-USER-ID", user.getLoginId());
+            headers.set("X-USER-ID", user.getLoginId().getId());
 
             // act
             ResponseEntity<ApiResponse<PointV1Dto.PointResponse>> response = testRestTemplate.exchange(
@@ -123,7 +123,7 @@ class PointV1ApiE2ETest {
 
             PointV1Dto.PointRequest firstRequest = new PointV1Dto.PointRequest(1000);
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-USER-ID", user.getLoginId());
+            headers.set("X-USER-ID", user.getLoginId().getId());
 
             testRestTemplate.exchange(
                     ENDPOINT_CHARGE_POINT,
@@ -170,7 +170,7 @@ class PointV1ApiE2ETest {
 
             PointV1Dto.PointRequest chargeRequest = new PointV1Dto.PointRequest(1200);
             HttpHeaders chargeHeaders = new HttpHeaders();
-            chargeHeaders.set("X-USER-ID", user.getLoginId());
+            chargeHeaders.set("X-USER-ID", user.getLoginId().getId());
 
             testRestTemplate.exchange(
                     ENDPOINT_CHARGE_POINT,
@@ -180,7 +180,7 @@ class PointV1ApiE2ETest {
             );
 
             HttpHeaders headers = new HttpHeaders();
-            headers.set("X-USER-ID", user.getLoginId());
+            headers.set("X-USER-ID", user.getLoginId().getId());
 
             // act
             ResponseEntity<ApiResponse<PointV1Dto.PointResponse>> response = testRestTemplate.exchange(

@@ -7,9 +7,9 @@ public record UserInfo(Long id, String loginId, String email, LocalDate birthDat
     public static UserInfo from(User user) {
         return new UserInfo(
                 user.getId(),
-                user.getLoginId(),
-                user.getEmail(),
-                user.getBirthDate(),
+                user.getLoginId().getId(),
+                user.getEmail().getAddress(),
+                user.getBirthDate().getDate(),
                 user.getGender().getCode()
         );
     }
