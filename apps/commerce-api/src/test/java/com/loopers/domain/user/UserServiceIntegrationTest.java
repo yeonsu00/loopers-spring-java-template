@@ -142,7 +142,7 @@ class UserServiceIntegrationTest {
             userService.signup(command);
 
             // act
-            Optional<User> optionalUser = userService.getUserByLoginId("testId123");
+            Optional<User> optionalUser = userService.findUserByLoginId("testId123");
 
             // assert
             assertThat(optionalUser).isPresent();
@@ -157,7 +157,7 @@ class UserServiceIntegrationTest {
             String nonExistentLoginId = "nonExistentLoginId";
 
             // act
-            Optional<User> result = userService.getUserByLoginId(nonExistentLoginId);
+            Optional<User> result = userService.findUserByLoginId(nonExistentLoginId);
 
             // assert
             assertThat(result).isEmpty();

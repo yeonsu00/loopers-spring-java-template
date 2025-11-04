@@ -19,7 +19,7 @@ public class UserFacade {
     }
 
     public UserInfo getUserInfo(String loginId) {
-        User user = userService.getUserByLoginId(loginId)
+        User user = userService.findUserByLoginId(loginId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, loginId + " 사용자를 찾을 수 없습니다."));
 
         return UserInfo.from(user);
