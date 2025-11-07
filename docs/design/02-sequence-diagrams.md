@@ -236,17 +236,18 @@ sequenceDiagram
     participant Facade as OrderFacade
     participant User as User
     participant Product as Product
-    participant Order as Order
     participant Point as Point
+    participant Order as Order
     participant Payment as Payment
+    participant Delivery as Delivery
 
-    a ->> Controller: POST /api/v1/orders<br/>(주문 상품 목록[{productId, quantity}])
+    a ->> Controller: POST /api/v1/orders<br/>(주문 상품 목록[{productId, quantity}], 배송 정보)
     Controller ->> User: 사용자 인증 정보 확인
     alt 인증 실패
         User -->> Controller: Unauthorized
         Controller -->> a: 401 Unauthorized (로그인 필요)
     else 인증 성공
-        Controller ->> Facade: 주문 생성 및 결제 요청<br/>(userId, 주문 상품 목록)
+        Controller ->> Facade: 주문 생성 및 결제 요청<br/>(userId, 주문 상품 목록, 배송 정보)
 
         loop 각 상품에 대해
             Facade ->> Product: 상품 존재 여부 및 재고 조회
@@ -280,13 +281,16 @@ sequenceDiagram
             Facade ->> Point: 포인트 차감 (총 주문 금액만큼)
             Point -->> Facade: 포인트 차감 완료
 
-            Facade ->> Order: 주문 정보 저장<br/>(주문자, 상품 목록, 금액, 주문 상태, 결제 일시)
+            Facade ->> Delivery: 배송 정보 생성<br/>(수령인, 주소)
+            Delivery -->> Facade: 배송 정보 객체 반환
+
+            Facade ->> Order: 주문 정보 저장<br/>(주문자, 상품 목록, 총 금액, 주문 상태, 배송 정보)
             Order -->> Facade: 주문 저장 완료
 
             Facade ->> Payment: 결제 정보 생성 및 저장<br/>(주문, 결제 금액, 결제 상태)
             Payment -->> Facade: 결제 완료 정보 반환
 
-            Facade -->> Controller: 주문 완료 정보 반환<br/>(주문 ID, 주문 번호, 상품 목록, 총 금액, 결제 상태, 결제 일시)
+            Facade -->> Controller: 주문 완료 정보 반환<br/>(주문 ID, 주문 번호, 상품 목록, 총 금액, 배송 정보, 결제 상태, 결제 일시)
             Controller -->> a: 201 Created<br/>(주문 완료 응답)
         end
     end
