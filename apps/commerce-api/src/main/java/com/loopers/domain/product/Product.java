@@ -40,5 +40,7 @@ public class Product extends BaseEntity {
 
     private boolean isDeleted;
 
-
+    public void reduceStock(Integer quantity) {
+        this.stock.reduceQuantity(quantity);
+    }
 }
