@@ -29,7 +29,16 @@ public class LikeFacade {
     @Transactional
     public LikeInfo recordLike(LikeCommand.LikeProductCommand command) {
         User user = userService.findUserByLoginId(command.loginId())
-                .orElseThrow(() -> new RuntimeException(command.loginId() + " 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        if (likeService.existsByUserIdAndProductId(user.getId(), command.productId())) {
+            Product product = productService.findProductById(command.productId())
+                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
+            return LikeInfo.from(
+                    product.getId(),
+                    product.getLikeCount().getCount()
+            );
+        }
 
         Product product = productService.increaseLikeCount(command.productId());
         likeService.recordLike(user.getId(), product.getId());
@@ -43,7 +52,16 @@ public class LikeFacade {
     @Transactional
     public LikeInfo cancelLike(LikeCommand.LikeProductCommand command) {
         User user = userService.findUserByLoginId(command.loginId())
-                .orElseThrow(() -> new RuntimeException(command.loginId() + " 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        if (!likeService.existsByUserIdAndProductId(user.getId(), command.productId())) {
+            Product product = productService.findProductById(command.productId())
+                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
+            return LikeInfo.from(
+                    product.getId(),
+                    product.getLikeCount().getCount()
+            );
+        }
 
         Product product = productService.decreaseLikeCount(command.productId());
         likeService.cancelLike(user.getId(), product.getId());
@@ -57,7 +75,7 @@ public class LikeFacade {
     @Transactional(readOnly = true)
     public List<ProductInfo> getLikedProducts(String loginId) {
         User user = userService.findUserByLoginId(loginId)
-                .orElseThrow(() -> new RuntimeException(loginId + " 사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         List<Long> productIds = likeService.findLikedProductIds(user.getId());
 
