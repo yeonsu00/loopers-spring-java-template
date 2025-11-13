@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -43,6 +44,18 @@ public class OrderV1Controller implements OrderV1ApiSpec {
         List<OrderV1Dto.OrderResponse> response = orderInfo.stream()
                 .map(OrderV1Dto.OrderResponse::from)
                 .toList();
+
+        return ApiResponse.success(response);
+    }
+
+    @GetMapping("/{orderId}")
+    @Override
+    public ApiResponse<OrderV1Dto.OrderResponse> getOrderInfo(
+            @RequestHeader("X-USER-ID") String loginId,
+            @PathVariable Long orderId
+    ) {
+        OrderInfo orderInfo = orderFacade.getOrderInfo(loginId, orderId);
+        OrderV1Dto.OrderResponse response = OrderV1Dto.OrderResponse.from(orderInfo);
 
         return ApiResponse.success(response);
     }

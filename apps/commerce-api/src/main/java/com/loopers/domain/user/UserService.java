@@ -35,13 +35,4 @@ public class UserService {
         return userRepository.findByLoginId(loginId);
     }
 
-    public List<Order> findOrdersByUserId(Long userId) {
-        List<Order> orders = userRepository.findOrdersByUserId(userId);
-
-        if (orders.isEmpty()) {
-            throw new CoreException(ErrorType.NOT_FOUND, "해당 사용자의 주문 내역이 없습니다.");
-        }
-
-        return orders;
-    }
 }

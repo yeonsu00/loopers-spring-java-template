@@ -53,10 +53,21 @@ public class OrderFacade {
         User user = userService.findUserByLoginId(loginId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        List<Order> orders = userService.findOrdersByUserId(user.getId());
+        List<Order> orders = orderService.findOrdersByUserId(user.getId());
 
         return orders.stream()
                 .map(order -> OrderInfo.from(order, order.getOrderItems(), order.getDelivery()))
                 .toList();
+    }
+
+    @Transactional
+    public OrderInfo getOrderInfo(String loginId, Long orderId) {
+        User user = userService.findUserByLoginId(loginId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        Order order = orderService.findOrderByIdAndUserId(orderId, user.getId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "주문을 찾을 수 없습니다."));
+
+        return OrderInfo.from(order, order.getOrderItems(), order.getDelivery());
     }
 }
