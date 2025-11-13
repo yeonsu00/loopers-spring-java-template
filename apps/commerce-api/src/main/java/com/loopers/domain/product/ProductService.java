@@ -2,6 +2,7 @@ package com.loopers.domain.product;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,5 +21,17 @@ public class ProductService {
 
     public Optional<Product> findProductById(Long productId) {
         return productRepository.findById(productId);
+    }
+
+    public List<Product> findProductsByLatestWithBrandName(Long brandId, int page, int size) {
+        return productRepository.findProductsByLatestWithBrandName(brandId, page, size);
+    }
+
+    public List<Product> findProductsByPriceAscWithBrandName(Long brandId, int page, int size) {
+        return productRepository.findProductsByPriceAscWithBrandName(brandId, page, size);
+    }
+
+    public List<Product> findProductsByLikesDescWithBrandName(Long brandId, int page, int size) {
+        return productRepository.findProductsByLikesDescWithBrandName(brandId, page, size);
     }
 }
