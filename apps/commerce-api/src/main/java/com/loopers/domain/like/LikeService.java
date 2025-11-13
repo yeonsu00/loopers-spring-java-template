@@ -1,5 +1,6 @@
 package com.loopers.domain.like;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,10 @@ public class LikeService {
 
     public void cancelLike(Long userId, Long productId) {
         likeRepository.delete(userId, productId);
+    }
+
+    public List<Long> findLikedProductIds(Long userId) {
+        return likeRepository.findProductIdsByUserId(userId);
     }
 
 }

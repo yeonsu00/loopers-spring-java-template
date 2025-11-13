@@ -29,5 +29,14 @@ public interface LikeV1ApiSpec {
             @Parameter(name = "productId", description = "상품 ID", required = true)
             Long productId
     );
+
+    @Operation(
+            summary = "내가 좋아요 한 상품 목록 조회",
+            description = "로그인 ID로 내가 좋아요 한 상품 목록을 조회합니다."
+    )
+    ApiResponse<LikeV1Dto.LikedProductListResponse> getLikedProducts(
+            @Parameter(name = "X-USER-ID", description = "로그인 ID", required = true)
+            String loginId
+    );
 }
 
