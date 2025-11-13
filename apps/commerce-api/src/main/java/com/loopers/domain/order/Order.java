@@ -21,11 +21,13 @@ import lombok.Getter;
 @Entity
 @Table(name = "orders")
 @Getter
+@Builder
 public class Order extends BaseEntity {
 
     private Long userId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @Builder.Default
     List<OrderItem> orderItems = new ArrayList<>();
 
     private Integer totalPrice;
@@ -46,7 +48,6 @@ public class Order extends BaseEntity {
     public Order() {
     }
 
-    @Builder
     private Order(Long userId, List<OrderItem> orderItems, Integer totalPrice,
                  OrderStatus orderStatus, Delivery delivery) {
         this.userId = userId;
