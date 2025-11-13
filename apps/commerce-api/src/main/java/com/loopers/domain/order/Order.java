@@ -57,6 +57,7 @@ public class Order extends BaseEntity {
     }
 
     public static Order createOrder(Long userId, Delivery delivery) {
+        validateCreateOrder(userId, delivery);
         return Order.builder()
                 .userId(userId)
                 .totalPrice(0)
@@ -66,13 +67,41 @@ public class Order extends BaseEntity {
     }
 
     public void addOrderItem(OrderItem orderItem) {
-        if (orderItem == null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 상품은 필수입니다.");
-        }
+        validateOrderItem(orderItem);
         orderItems.add(orderItem);
     }
 
     public void addPrice(int price) {
+        validatePrice(price);
         this.totalPrice += price;
+    }
+
+    private static void validateCreateOrder(Long userId, Delivery delivery) {
+        validateUserId(userId);
+        validateDelivery(delivery);
+    }
+
+    private static void validateUserId(Long userId) {
+        if (userId == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "사용자 ID는 필수입니다.");
+        }
+    }
+
+    private static void validateDelivery(Delivery delivery) {
+        if (delivery == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "배송 정보는 필수입니다.");
+        }
+    }
+
+    private void validateOrderItem(OrderItem orderItem) {
+        if (orderItem == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "주문 상품은 필수입니다.");
+        }
+    }
+
+    private void validatePrice(int price) {
+        if (price <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "가격은 0보다 커야 합니다.");
+        }
     }
 }
