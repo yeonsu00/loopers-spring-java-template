@@ -71,6 +71,10 @@ public class Product extends BaseEntity {
         this.stock.reduceQuantity(quantity);
     }
 
+    public void increaseLikeCount() {
+        this.likeCount.increase();
+    }
+
     private void validate(String name, Long brandId, Price price, LikeCount likeCount, Stock stock) {
         validateName(name);
         validateBrandId(brandId);

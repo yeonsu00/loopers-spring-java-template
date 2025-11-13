@@ -28,6 +28,10 @@ public class LikeCount {
                 .build();
     }
 
+    public void increase() {
+        this.count++;
+    }
+
     private void validate(Integer count) {
         if (count == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "좋아요 수는 필수입니다.");
