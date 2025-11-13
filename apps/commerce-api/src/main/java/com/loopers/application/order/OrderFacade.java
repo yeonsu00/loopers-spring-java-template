@@ -10,6 +10,7 @@ import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,4 +48,15 @@ public class OrderFacade {
         return OrderInfo.from(order, order.getOrderItems(), delivery);
     }
 
+    @Transactional
+    public List<OrderInfo> getOrdersInfo(String loginId) {
+        User user = userService.findUserByLoginId(loginId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        List<Order> orders = userService.findOrdersByUserId(user.getId());
+
+        return orders.stream()
+                .map(order -> OrderInfo.from(order, order.getOrderItems(), order.getDelivery()))
+                .toList();
+    }
 }

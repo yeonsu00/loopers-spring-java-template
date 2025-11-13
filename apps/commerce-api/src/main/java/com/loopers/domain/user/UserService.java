@@ -1,8 +1,10 @@
 package com.loopers.domain.user;
 
 import com.loopers.application.user.UserCommand;
+import com.loopers.domain.order.Order;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,4 +35,13 @@ public class UserService {
         return userRepository.findByLoginId(loginId);
     }
 
+    public List<Order> findOrdersByUserId(Long userId) {
+        List<Order> orders = userRepository.findOrdersByUserId(userId);
+
+        if (orders.isEmpty()) {
+            throw new CoreException(ErrorType.NOT_FOUND, "해당 사용자의 주문 내역이 없습니다.");
+        }
+
+        return orders;
+    }
 }
