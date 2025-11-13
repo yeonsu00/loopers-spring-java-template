@@ -347,9 +347,9 @@ class ProductFacadeIntegrationTest {
 
     private Product createProduct(Long id, String name, Long brandId, Integer price, Integer likeCount, Integer stock) {
         Product product = mock(Product.class);
-        Price priceValue = createPrice(price);
-        LikeCount likeCountValue = createLikeCount(likeCount);
-        Stock stockValue = createStock(stock);
+        Price priceValue = mock(Price.class);
+        LikeCount likeCountValue = mock(LikeCount.class);
+        Stock stockValue = mock(Stock.class);
 
         when(product.getId()).thenReturn(id);
         when(product.getName()).thenReturn(name);
@@ -357,44 +357,11 @@ class ProductFacadeIntegrationTest {
         when(product.getPrice()).thenReturn(priceValue);
         when(product.getLikeCount()).thenReturn(likeCountValue);
         when(product.getStock()).thenReturn(stockValue);
+        when(priceValue.getPrice()).thenReturn(price);
+        when(likeCountValue.getCount()).thenReturn(likeCount);
+        when(stockValue.getQuantity()).thenReturn(stock);
 
         return product;
-    }
-
-    private Price createPrice(Integer price) {
-        try {
-            Price priceValue = Price.class.getDeclaredConstructor().newInstance();
-            java.lang.reflect.Field priceField = Price.class.getDeclaredField("price");
-            priceField.setAccessible(true);
-            priceField.set(priceValue, price);
-            return priceValue;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create Price", e);
-        }
-    }
-
-    private LikeCount createLikeCount(Integer count) {
-        try {
-            LikeCount likeCount = LikeCount.class.getDeclaredConstructor().newInstance();
-            java.lang.reflect.Field countField = LikeCount.class.getDeclaredField("count");
-            countField.setAccessible(true);
-            countField.set(likeCount, count);
-            return likeCount;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create LikeCount", e);
-        }
-    }
-
-    private Stock createStock(Integer quantity) {
-        try {
-            Stock stock = Stock.class.getDeclaredConstructor().newInstance();
-            java.lang.reflect.Field quantityField = Stock.class.getDeclaredField("quantity");
-            quantityField.setAccessible(true);
-            quantityField.set(stock, quantity);
-            return stock;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create Stock", e);
-        }
     }
 }
 
