@@ -18,5 +18,16 @@ public interface LikeV1ApiSpec {
             @Parameter(name = "productId", description = "상품 ID", required = true)
             Long productId
     );
+
+    @Operation(
+            summary = "상품 좋아요 취소",
+            description = "상품 ID로 상품의 좋아요를 취소합니다."
+    )
+    ApiResponse<LikeV1Dto.LikeResponse> cancelLikeProduct(
+            @Parameter(name = "X-USER-ID", description = "로그인 ID", required = true)
+            String loginId,
+            @Parameter(name = "productId", description = "상품 ID", required = true)
+            Long productId
+    );
 }
 

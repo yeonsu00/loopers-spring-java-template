@@ -31,4 +31,18 @@ public class LikeFacade {
         );
     }
 
+    @Transactional
+    public LikeInfo cancelLike(LikeCommand.LikeProductCommand command) {
+        User user = userService.findUserByLoginId(command.loginId())
+                .orElseThrow(() -> new RuntimeException(command.loginId() + " 사용자를 찾을 수 없습니다."));
+
+        Product product = productService.decreaseLikeCount(command.productId());
+        likeService.cancelLike(user.getId(), product.getId());
+
+        return LikeInfo.from(
+                product.getId(),
+                product.getLikeCount().getCount()
+        );
+    }
+
 }

@@ -14,4 +14,8 @@ public class LikeService {
         likeRepository.save(userId, productId);
     }
 
+    public void cancelLike(Long userId, Long productId) {
+        likeRepository.delete(userId, productId);
+    }
+
 }

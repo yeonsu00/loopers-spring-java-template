@@ -41,4 +41,11 @@ public class ProductService {
         product.increaseLikeCount();
         return product;
     }
+
+    public Product decreaseLikeCount(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        product.decreaseLikeCount();
+        return product;
+    }
 }
