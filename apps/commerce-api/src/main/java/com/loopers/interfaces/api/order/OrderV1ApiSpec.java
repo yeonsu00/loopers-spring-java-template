@@ -1,0 +1,23 @@
+package com.loopers.interfaces.api.order;
+
+import com.loopers.interfaces.api.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Order V1 API", description = "Order V1 API 입니다.")
+public interface OrderV1ApiSpec {
+
+    @Operation(
+            summary = "주문 요청",
+            description = "사용자가 주문 요청을 합니다."
+    )
+    ApiResponse<OrderV1Dto.OrderResponse> order(
+            @Schema(name = "로그인 ID", description = "주문 요청을 하는 사용자의 로그인 ID")
+            String loginId,
+
+            @Schema(name = "주문 요청 정보", description = "주문할 정보")
+            OrderV1Dto.OrderRequest orderRequest
+    );
+
+}
