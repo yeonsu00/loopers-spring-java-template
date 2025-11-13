@@ -23,12 +23,6 @@ import lombok.Getter;
 @Getter
 public class Order extends BaseEntity {
 
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "number", column = @Column(name = "order_number", nullable = false, unique = true))
-    })
-    private OrderNumber orderNumber;
-
     private Long userId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
@@ -53,9 +47,8 @@ public class Order extends BaseEntity {
     }
 
     @Builder
-    private Order(OrderNumber orderNumber, Long userId, List<OrderItem> orderItems, Integer totalPrice,
+    private Order(Long userId, List<OrderItem> orderItems, Integer totalPrice,
                  OrderStatus orderStatus, Delivery delivery) {
-        this.orderNumber = orderNumber;
         this.userId = userId;
         this.orderItems = orderItems;
         this.totalPrice = totalPrice;
@@ -65,7 +58,6 @@ public class Order extends BaseEntity {
 
     public static Order createOrder(Long userId, Delivery delivery) {
         return Order.builder()
-                .orderNumber(OrderNumber.generate())
                 .userId(userId)
                 .totalPrice(0)
                 .orderStatus(OrderStatus.CREATED)

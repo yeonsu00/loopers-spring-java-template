@@ -7,7 +7,6 @@ import java.util.List;
 
 public record OrderInfo(
         Long orderId,
-        String orderNumber,
         String orderStatus,
         List<OrderItemInfo> orderItems,
         DeliveryInfo delivery
@@ -20,7 +19,6 @@ public record OrderInfo(
 
         return new OrderInfo(
                 order.getId(),
-                order.getOrderNumber().getNumber(),
                 order.getOrderStatus().getDescription(),
                 itemInfos,
                 DeliveryInfo.from(delivery)

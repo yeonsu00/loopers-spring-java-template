@@ -51,7 +51,6 @@ public class OrderV1Dto {
 
     public record OrderResponse(
             Long orderId,
-            String orderNumber,
             String orderStatus,
             List<OrderItemResponse> orderItems,
             DeliveryResponse delivery
@@ -59,7 +58,6 @@ public class OrderV1Dto {
         public static OrderResponse from(OrderInfo orderInfo) {
             return new OrderResponse(
                     orderInfo.orderId(),
-                    orderInfo.orderNumber(),
                     orderInfo.orderStatus(),
                     orderInfo.orderItems().stream()
                             .map(OrderItemResponse::from)
