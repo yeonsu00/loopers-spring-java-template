@@ -4,6 +4,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +13,10 @@ import org.springframework.stereotype.Service;
 public class BrandService {
 
     private final BrandRepository brandRepository;
+
+    public Optional<Brand> findBrandById(Long brandId) {
+        return brandRepository.findById(brandId);
+    }
 
     public String findBrandNameById(Long brandId) {
         Brand brand = brandRepository.findById(brandId)
