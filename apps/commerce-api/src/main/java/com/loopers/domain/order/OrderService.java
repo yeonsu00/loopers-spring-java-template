@@ -1,5 +1,6 @@
 package com.loopers.domain.order;
 
+import com.loopers.domain.product.Product;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,14 +15,14 @@ public class OrderService {
                 order,
                 product.getId(),
                 product.getName(),
-                product.getPrice(),
+                product.getPrice().getPrice(),
                 quantity
         );
 
         order.addOrderItem(orderItem);
     }
 
-    public void addTotalPrice(Order order, int totalPrice) {
-        order.addPrice(totalPrice);
+    public void addTotalPrice(Order order, int price, int quantity) {
+        order.addPrice(price * quantity);
     }
 }

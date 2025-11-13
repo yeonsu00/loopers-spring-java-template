@@ -4,6 +4,7 @@ import com.loopers.domain.order.Delivery;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.point.PointService;
+import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
@@ -32,10 +33,11 @@ public class OrderFacade {
 
         int totalPrice = 0;
         for (OrderCommand.OrderItemCommand orderItemCommand : createOrderCommand.orderItems()) {
-            Product product = productService.findProductById(orderItemCommand.productId());
+            Product product = productService.findProductById(orderItemCommand.productId())
+                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
 
             orderService.createOrderItem(order, product, orderItemCommand.quantity());
-            orderService.addTotalPrice(order, product.getPrice() * orderItemCommand.quantity());
+            orderService.addTotalPrice(order, product.getPrice().getPrice(), orderItemCommand.quantity());
 
             productService.reduceStock(product.getId(), orderItemCommand.quantity());
         }
