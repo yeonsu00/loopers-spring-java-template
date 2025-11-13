@@ -28,6 +28,17 @@ public class LikeCount {
                 .build();
     }
 
+    public void increase() {
+        this.count++;
+    }
+
+    public void decrease() {
+        if (this.count <= 0) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "좋아요 수는 0보다 작을 수 없습니다.");
+        }
+        this.count--;
+    }
+
     private void validate(Integer count) {
         if (count == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "좋아요 수는 필수입니다.");

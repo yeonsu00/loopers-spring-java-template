@@ -68,7 +68,8 @@ class OrderServiceIntegrationTest {
             // arrange
             Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
             Order order = Order.createOrder(1L, delivery);
-            Product product = createProduct(1L, "상품명", 10000);
+            Integer price = 10000;
+            Product product = createProduct(1L, "상품명", price);
             Integer quantity = 2;
 
             // act
@@ -81,7 +82,7 @@ class OrderServiceIntegrationTest {
                     () -> assertThat(orderItem.getOrder()).isEqualTo(order),
                     () -> assertThat(orderItem.getProductId()).isEqualTo(product.getId()),
                     () -> assertThat(orderItem.getProductName()).isEqualTo(product.getName()),
-                    () -> assertThat(orderItem.getPrice()).isEqualTo(product.getPrice().getPrice()),
+                    () -> assertThat(orderItem.getPrice()).isEqualTo(price),
                     () -> assertThat(orderItem.getQuantity()).isEqualTo(quantity)
             );
         }
@@ -209,38 +210,15 @@ class OrderServiceIntegrationTest {
 
     private Product createProduct(Long id, String name, Integer price) {
         Product product = mock(Product.class);
-        Price priceValue = createPrice(price);
-        Stock stock = createStock(100);
+        Price priceValue = mock(Price.class);
+        Stock stock = mock(Stock.class);
         
         when(product.getId()).thenReturn(id);
         when(product.getName()).thenReturn(name);
         when(product.getPrice()).thenReturn(priceValue);
+        when(priceValue.getPrice()).thenReturn(price);
         when(product.getStock()).thenReturn(stock);
         
         return product;
-    }
-
-    private Price createPrice(Integer price) {
-        try {
-            Price priceValue = Price.class.getDeclaredConstructor().newInstance();
-            java.lang.reflect.Field priceField = Price.class.getDeclaredField("price");
-            priceField.setAccessible(true);
-            priceField.set(priceValue, price);
-            return priceValue;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create Price", e);
-        }
-    }
-
-    private Stock createStock(Integer quantity) {
-        try {
-            Stock stock = Stock.class.getDeclaredConstructor().newInstance();
-            java.lang.reflect.Field quantityField = Stock.class.getDeclaredField("quantity");
-            quantityField.setAccessible(true);
-            quantityField.set(stock, quantity);
-            return stock;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create Stock", e);
-        }
     }
 }
