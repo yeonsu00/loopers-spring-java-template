@@ -14,4 +14,11 @@ public class OrderNumber {
     @Column(nullable = false)
     private String number;
 
+    private OrderNumber(String number) {
+        this.number = number;
+    }
+
+    public static OrderNumber generate() {
+        return new OrderNumber("");
+    }
 }
