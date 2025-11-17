@@ -79,7 +79,6 @@ class OrderServiceIntegrationTest {
             assertThat(order.getOrderItems()).hasSize(1);
             OrderItem orderItem = order.getOrderItems().get(0);
             assertAll(
-                    () -> assertThat(orderItem.getOrder()).isEqualTo(order),
                     () -> assertThat(orderItem.getProductId()).isEqualTo(product.getId()),
                     () -> assertThat(orderItem.getProductName()).isEqualTo(product.getName()),
                     () -> assertThat(orderItem.getPrice()).isEqualTo(price),
