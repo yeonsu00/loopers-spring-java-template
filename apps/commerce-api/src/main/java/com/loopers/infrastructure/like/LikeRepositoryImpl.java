@@ -31,6 +31,23 @@ public class LikeRepositoryImpl implements LikeRepository {
     }
 
     @Override
+    public boolean saveIfAbsent(Long userId, Long productId) {
+        try {
+            Like like = Like.createLike(userId, productId);
+            likeJpaRepository.save(like);
+            return true;
+        } catch (DataIntegrityViolationException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean deleteIfPresent(Long userId, Long productId) {
+        int deletedCount = likeJpaRepository.deleteByUserIdAndProductIdAndReturnCount(userId, productId);
+        return deletedCount > 0;
+    }
+
+    @Override
     public List<Long> findProductIdsByUserId(Long userId) {
         return likeJpaRepository.findProductIdsByUserId(userId);
     }
