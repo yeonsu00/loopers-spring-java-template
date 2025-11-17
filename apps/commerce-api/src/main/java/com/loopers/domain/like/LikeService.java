@@ -15,7 +15,7 @@ public class LikeService {
         if (likeRepository.existsByUserIdAndProductId(userId, productId)) {
             return;
         }
-        likeRepository.save(userId, productId);
+        likeRepository.saveLike(Like.createLike(userId, productId));
     }
 
     public void cancelLike(Long userId, Long productId) {
@@ -23,6 +23,14 @@ public class LikeService {
             return;
         }
         likeRepository.delete(userId, productId);
+    }
+
+    public boolean recordLikeIfAbsent(Long userId, Long productId) {
+        return likeRepository.saveIfAbsent(userId, productId);
+    }
+
+    public boolean cancelLikeIfPresent(Long userId, Long productId) {
+        return likeRepository.deleteIfPresent(userId, productId);
     }
 
     public List<Long> findLikedProductIds(Long userId) {

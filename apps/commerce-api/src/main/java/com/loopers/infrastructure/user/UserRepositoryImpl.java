@@ -1,9 +1,7 @@
 package com.loopers.infrastructure.user;
 
-import com.loopers.domain.order.Order;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserRepository;
-import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -32,11 +30,6 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public Optional<User> findByLoginId(String loginId) {
         return userJpaRepository.findByLoginId(loginId);
-    }
-
-    @Override
-    public List<Order> findOrdersByUserId(Long userId) {
-        return List.of();
     }
 
 }
