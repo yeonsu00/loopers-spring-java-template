@@ -20,7 +20,6 @@ public class OrderService {
 
     public void createOrderItem(Order order, Product product, Integer quantity) {
         OrderItem orderItem = OrderItem.createOrderItem(
-                order,
                 product.getId(),
                 product.getName(),
                 product.getPrice().getPrice(),
@@ -32,6 +31,10 @@ public class OrderService {
 
     public int addTotalPrice(Order order, int price, int quantity) {
         return order.addPrice(price * quantity);
+    }
+
+    public void saveOrder(Order order) {
+        orderRepository.saveOrder(order);
     }
 
     public List<Order> findOrdersByUserId(Long userId) {

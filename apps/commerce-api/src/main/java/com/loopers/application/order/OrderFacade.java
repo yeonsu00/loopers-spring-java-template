@@ -45,6 +45,7 @@ public class OrderFacade {
 
         pointService.deductPoint(user.getId(), totalPrice);
 
+        orderService.saveOrder(order);
         return OrderInfo.from(order, order.getOrderItems(), delivery);
     }
 

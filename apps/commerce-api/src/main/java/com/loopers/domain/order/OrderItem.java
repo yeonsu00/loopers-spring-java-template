@@ -4,9 +4,6 @@ import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,10 +12,6 @@ import lombok.Getter;
 @Table(name = "order_items")
 @Getter
 public class OrderItem extends BaseEntity {
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id")
-    private Order order;
 
     private Long productId;
 
@@ -29,9 +22,8 @@ public class OrderItem extends BaseEntity {
     private Integer quantity;
 
     @Builder
-    private OrderItem(Order order, Long productId, String productName, Integer price, Integer quantity) {
-        validate(order, productId, productName, price, quantity);
-        this.order = order;
+    private OrderItem(Long productId, String productName, Integer price, Integer quantity) {
+        validate(productId, productName, price, quantity);
         this.productId = productId;
         this.productName = productName;
         this.price = price;
@@ -41,9 +33,8 @@ public class OrderItem extends BaseEntity {
     public OrderItem() {
     }
 
-    public static OrderItem createOrderItem(Order order, Long productId, String productName, Integer price, Integer quantity) {
+    public static OrderItem createOrderItem(Long productId, String productName, Integer price, Integer quantity) {
         return OrderItem.builder()
-                .order(order)
                 .productId(productId)
                 .productName(productName)
                 .price(price)
@@ -51,18 +42,11 @@ public class OrderItem extends BaseEntity {
                 .build();
     }
 
-    private void validate(Order order, Long productId, String productName, Integer price, Integer quantity) {
-        validateOrder(order);
+    private void validate(Long productId, String productName, Integer price, Integer quantity) {
         validateProductId(productId);
         validateProductName(productName);
         validatePrice(price);
         validateQuantity(quantity);
-    }
-
-    private void validateOrder(Order order) {
-        if (order == null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문은 필수입니다.");
-        }
     }
 
     private void validateProductId(Long productId) {
