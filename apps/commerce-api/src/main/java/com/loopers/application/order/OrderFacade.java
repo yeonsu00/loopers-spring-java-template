@@ -38,7 +38,7 @@ public class OrderFacade {
                     .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
 
             orderService.createOrderItem(order, product, orderItemCommand.quantity());
-            orderService.addTotalPrice(order, product.getPrice().getPrice(), orderItemCommand.quantity());
+            totalPrice += orderService.addTotalPrice(order, product.getPrice().getPrice(), orderItemCommand.quantity());
 
             productService.reduceStock(product.getId(), orderItemCommand.quantity());
         }

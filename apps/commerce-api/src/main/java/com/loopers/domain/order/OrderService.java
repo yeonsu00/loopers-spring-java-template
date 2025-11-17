@@ -30,8 +30,8 @@ public class OrderService {
         order.addOrderItem(orderItem);
     }
 
-    public void addTotalPrice(Order order, int price, int quantity) {
-        order.addPrice(price * quantity);
+    public int addTotalPrice(Order order, int price, int quantity) {
+        return order.addPrice(price * quantity);
     }
 
     public List<Order> findOrdersByUserId(Long userId) {

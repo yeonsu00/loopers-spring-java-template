@@ -72,9 +72,10 @@ public class Order extends BaseEntity {
         orderItems.add(orderItem);
     }
 
-    public void addPrice(int price) {
+    public int addPrice(int price) {
         validatePrice(price);
         this.totalPrice += price;
+        return this.totalPrice;
     }
 
     private static void validateCreateOrder(Long userId, Delivery delivery) {
