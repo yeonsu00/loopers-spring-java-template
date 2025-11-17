@@ -23,19 +23,16 @@ class OrderItemTest {
         @Test
         void createsOrderItem_whenAllFieldsAreValid() {
             // arrange
-            Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
-            Order order = Order.createOrder(1L, delivery);
             Long productId = 1L;
             String productName = "상품명";
             Integer price = 10000;
             Integer quantity = 2;
 
             // act
-            OrderItem orderItem = OrderItem.createOrderItem(order, productId, productName, price, quantity);
+            OrderItem orderItem = OrderItem.createOrderItem(productId, productName, price, quantity);
 
             // assert
             assertAll(
-                    () -> assertThat(orderItem.getOrder()).isEqualTo(order),
                     () -> assertThat(orderItem.getProductId()).isEqualTo(productId),
                     () -> assertThat(orderItem.getProductName()).isEqualTo(productName),
                     () -> assertThat(orderItem.getPrice()).isEqualTo(price),
@@ -43,37 +40,17 @@ class OrderItemTest {
             );
         }
 
-        @DisplayName("주문이 null이면 BAD_REQUEST가 발생한다.")
-        @Test
-        void throwsException_whenOrderIsNull() {
-            // arrange
-            Long productId = 1L;
-            String productName = "상품명";
-            Integer price = 10000;
-            Integer quantity = 2;
-
-            // act & assert
-            CoreException exception = assertThrows(CoreException.class, () -> {
-                OrderItem.createOrderItem(null, productId, productName, price, quantity);
-            });
-
-            assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
-            assertThat(exception.getMessage()).contains("주문은 필수입니다.");
-        }
-
         @DisplayName("상품 ID가 null이면 BAD_REQUEST가 발생한다.")
         @Test
         void throwsException_whenProductIdIsNull() {
             // arrange
-            Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
-            Order order = Order.createOrder(1L, delivery);
             String productName = "상품명";
             Integer price = 10000;
             Integer quantity = 2;
 
             // act & assert
             CoreException exception = assertThrows(CoreException.class, () -> {
-                OrderItem.createOrderItem(order, null, productName, price, quantity);
+                OrderItem.createOrderItem(null, productName, price, quantity);
             });
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
@@ -86,15 +63,13 @@ class OrderItemTest {
         @ValueSource(strings = {" ", "   "})
         void throwsException_whenProductNameIsBlank(String invalidProductName) {
             // arrange
-            Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
-            Order order = Order.createOrder(1L, delivery);
             Long productId = 1L;
             Integer price = 10000;
             Integer quantity = 2;
 
             // act & assert
             CoreException exception = assertThrows(CoreException.class, () -> {
-                OrderItem.createOrderItem(order, productId, invalidProductName, price, quantity);
+                OrderItem.createOrderItem(productId, invalidProductName, price, quantity);
             });
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
@@ -105,15 +80,13 @@ class OrderItemTest {
         @Test
         void throwsException_whenPriceIsNull() {
             // arrange
-            Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
-            Order order = Order.createOrder(1L, delivery);
             Long productId = 1L;
             String productName = "상품명";
             Integer quantity = 2;
 
             // act & assert
             CoreException exception = assertThrows(CoreException.class, () -> {
-                OrderItem.createOrderItem(order, productId, productName, null, quantity);
+                OrderItem.createOrderItem(productId, productName, null, quantity);
             });
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
@@ -125,15 +98,13 @@ class OrderItemTest {
         @ValueSource(ints = {0, -1, -100})
         void throwsException_whenPriceIsZeroOrNegative(int invalidPrice) {
             // arrange
-            Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
-            Order order = Order.createOrder(1L, delivery);
             Long productId = 1L;
             String productName = "상품명";
             Integer quantity = 2;
 
             // act & assert
             CoreException exception = assertThrows(CoreException.class, () -> {
-                OrderItem.createOrderItem(order, productId, productName, invalidPrice, quantity);
+                OrderItem.createOrderItem(productId, productName, invalidPrice, quantity);
             });
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
@@ -144,15 +115,13 @@ class OrderItemTest {
         @Test
         void throwsException_whenQuantityIsNull() {
             // arrange
-            Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
-            Order order = Order.createOrder(1L, delivery);
             Long productId = 1L;
             String productName = "상품명";
             Integer price = 10000;
 
             // act & assert
             CoreException exception = assertThrows(CoreException.class, () -> {
-                OrderItem.createOrderItem(order, productId, productName, price, null);
+                OrderItem.createOrderItem(productId, productName, price, null);
             });
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);
@@ -164,15 +133,13 @@ class OrderItemTest {
         @ValueSource(ints = {0, -1, -100})
         void throwsException_whenQuantityIsZeroOrNegative(int invalidQuantity) {
             // arrange
-            Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
-            Order order = Order.createOrder(1L, delivery);
             Long productId = 1L;
             String productName = "상품명";
             Integer price = 10000;
 
             // act & assert
             CoreException exception = assertThrows(CoreException.class, () -> {
-                OrderItem.createOrderItem(order, productId, productName, price, invalidQuantity);
+                OrderItem.createOrderItem(productId, productName, price, invalidQuantity);
             });
 
             assertThat(exception.getErrorType()).isEqualTo(ErrorType.BAD_REQUEST);

@@ -11,6 +11,8 @@ import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
@@ -26,7 +28,8 @@ public class Order extends BaseEntity {
 
     private Long userId;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id")
     @Builder.Default
     List<OrderItem> orderItems = new ArrayList<>();
 
@@ -38,10 +41,10 @@ public class Order extends BaseEntity {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "receiverName", column = @Column(name = "receiver_name", nullable = false, unique = true)),
-            @AttributeOverride(name = "receiverPhoneNumber", column = @Column(name = "phone_number", nullable = false, unique = true)),
-            @AttributeOverride(name = "baseAddress", column = @Column(name = "base_address", nullable = false, unique = true)),
-            @AttributeOverride(name = "detailAddress", column = @Column(name = "detail_address", nullable = false, unique = true))
+            @AttributeOverride(name = "receiverName", column = @Column(name = "receiver_name", nullable = false)),
+            @AttributeOverride(name = "receiverPhoneNumber", column = @Column(name = "phone_number", nullable = false)),
+            @AttributeOverride(name = "baseAddress", column = @Column(name = "base_address", nullable = false)),
+            @AttributeOverride(name = "detailAddress", column = @Column(name = "detail_address", nullable = false))
     })
     private Delivery delivery;
 
@@ -72,9 +75,10 @@ public class Order extends BaseEntity {
         orderItems.add(orderItem);
     }
 
-    public void addPrice(int price) {
+    public int addPrice(int price) {
         validatePrice(price);
         this.totalPrice += price;
+        return this.totalPrice;
     }
 
     private static void validateCreateOrder(Long userId, Delivery delivery) {

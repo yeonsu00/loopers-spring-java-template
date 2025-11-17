@@ -5,9 +5,13 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LikeRepository {
-    void save(Long userId, Long productId);
+    void saveLike(Like like);
 
     void delete(Long userId, Long productId);
+
+    boolean saveIfAbsent(Long userId, Long productId);
+
+    boolean deleteIfPresent(Long userId, Long productId);
 
     List<Long> findProductIdsByUserId(Long userId);
 

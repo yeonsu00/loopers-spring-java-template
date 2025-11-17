@@ -79,9 +79,7 @@ class OrderTest {
             // arrange
             Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
             Order order = Order.createOrder(1L, delivery);
-            OrderItem orderItem = OrderItem.createOrderItem(
-                    order, 1L, "상품명", 10000, 2
-            );
+            OrderItem orderItem = OrderItem.createOrderItem(1L, "상품명", 10000, 2);
 
             // act
             order.addOrderItem(orderItem);

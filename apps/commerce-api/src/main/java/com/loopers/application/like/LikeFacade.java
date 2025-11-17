@@ -31,17 +31,15 @@ public class LikeFacade {
         User user = userService.findUserByLoginId(command.loginId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        if (likeService.existsByUserIdAndProductId(user.getId(), command.productId())) {
-            Product product = productService.findProductById(command.productId())
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
-            return LikeInfo.from(
-                    product.getId(),
-                    product.getLikeCount().getCount()
-            );
-        }
+        boolean wasCreated = likeService.recordLikeIfAbsent(user.getId(), command.productId());
 
-        Product product = productService.increaseLikeCount(command.productId());
-        likeService.recordLike(user.getId(), product.getId());
+        Product product;
+        if (wasCreated) {
+            product = productService.increaseLikeCount(command.productId());
+        } else {
+            product = productService.findProductById(command.productId())
+                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        }
 
         return LikeInfo.from(
                 product.getId(),
@@ -54,17 +52,15 @@ public class LikeFacade {
         User user = userService.findUserByLoginId(command.loginId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        if (!likeService.existsByUserIdAndProductId(user.getId(), command.productId())) {
-            Product product = productService.findProductById(command.productId())
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
-            return LikeInfo.from(
-                    product.getId(),
-                    product.getLikeCount().getCount()
-            );
-        }
+        boolean wasDeleted = likeService.cancelLikeIfPresent(user.getId(), command.productId());
 
-        Product product = productService.decreaseLikeCount(command.productId());
-        likeService.cancelLike(user.getId(), product.getId());
+        Product product;
+        if (wasDeleted) {
+            product = productService.decreaseLikeCount(command.productId());
+        } else {
+            product = productService.findProductById(command.productId())
+                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
+        }
 
         return LikeInfo.from(
                 product.getId(),
