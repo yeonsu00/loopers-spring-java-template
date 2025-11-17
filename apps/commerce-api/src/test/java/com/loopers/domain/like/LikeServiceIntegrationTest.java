@@ -1,7 +1,9 @@
 package com.loopers.domain.like;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -42,7 +44,10 @@ class LikeServiceIntegrationTest {
 
             // verify
             verify(likeRepository, times(1)).existsByUserIdAndProductId(userId, productId);
-            verify(likeRepository, times(1)).save(userId, productId);
+            verify(likeRepository, times(1)).saveLike(argThat(like ->
+                    like.getUserId().equals(userId) && like.getProductId().equals(productId)
+            ));
+
         }
 
         @DisplayName("이미 좋아요가 등록되어 있으면 멱등하게 동작하여 등록하지 않는다.")
@@ -59,7 +64,7 @@ class LikeServiceIntegrationTest {
 
             // verify
             verify(likeRepository, times(1)).existsByUserIdAndProductId(userId, productId);
-            verify(likeRepository, never()).save(anyLong(), anyLong());
+            verify(likeRepository, never()).saveLike(any(Like.class));
         }
     }
 

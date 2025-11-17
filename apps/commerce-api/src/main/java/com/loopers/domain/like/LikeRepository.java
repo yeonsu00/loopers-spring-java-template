@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LikeRepository {
-    void save(Long userId, Long productId);
+    void saveLike(Like like);
 
     void delete(Long userId, Long productId);
 

@@ -16,9 +16,8 @@ public class LikeRepositoryImpl implements LikeRepository {
     private final LikeJpaRepository likeJpaRepository;
 
     @Override
-    public void save(Long userId, Long productId) {
+    public void saveLike(Like like) {
         try {
-            Like like = Like.createLike(userId, productId);
             likeJpaRepository.save(like);
         } catch (DataIntegrityViolationException e) {
             throw new CoreException(ErrorType.CONFLICT, "이미 좋아요가 등록된 상품입니다.");

@@ -15,7 +15,7 @@ public class LikeService {
         if (likeRepository.existsByUserIdAndProductId(userId, productId)) {
             return;
         }
-        likeRepository.save(userId, productId);
+        likeRepository.saveLike(Like.createLike(userId, productId));
     }
 
     public void cancelLike(Long userId, Long productId) {
