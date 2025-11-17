@@ -38,10 +38,10 @@ public class Order extends BaseEntity {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "receiverName", column = @Column(name = "receiver_name", nullable = false, unique = true)),
-            @AttributeOverride(name = "receiverPhoneNumber", column = @Column(name = "phone_number", nullable = false, unique = true)),
-            @AttributeOverride(name = "baseAddress", column = @Column(name = "base_address", nullable = false, unique = true)),
-            @AttributeOverride(name = "detailAddress", column = @Column(name = "detail_address", nullable = false, unique = true))
+            @AttributeOverride(name = "receiverName", column = @Column(name = "receiver_name", nullable = false)),
+            @AttributeOverride(name = "receiverPhoneNumber", column = @Column(name = "phone_number", nullable = false)),
+            @AttributeOverride(name = "baseAddress", column = @Column(name = "base_address", nullable = false)),
+            @AttributeOverride(name = "detailAddress", column = @Column(name = "detail_address", nullable = false))
     })
     private Delivery delivery;
 
