@@ -179,7 +179,7 @@ class OrderServiceIntegrationTest {
             Delivery delivery = Delivery.createDelivery("홍길동", "010-1234-5678", "서울시 강남구", "테헤란로 123");
             Order order = Order.createOrder(userId, delivery);
 
-            doReturn(Optional.of(order)).when(orderRepository).findByIdAndUserId(orderId, userId);
+            doReturn(Optional.of(order)).when(orderRepository).findOrderByIdAndUserId(orderId, userId);
 
             // act
             Optional<Order> result = orderService.findOrderByIdAndUserId(orderId, userId);
@@ -187,7 +187,7 @@ class OrderServiceIntegrationTest {
             // assert
             assertThat(result).isPresent();
             assertThat(result.get()).isEqualTo(order);
-            verify(orderRepository, times(1)).findByIdAndUserId(orderId, userId);
+            verify(orderRepository, times(1)).findOrderByIdAndUserId(orderId, userId);
         }
 
         @DisplayName("주문이 없으면 빈 Optional이 반환된다.")
@@ -196,14 +196,14 @@ class OrderServiceIntegrationTest {
             // arrange
             Long orderId = 1L;
             Long userId = 1L;
-            doReturn(Optional.empty()).when(orderRepository).findByIdAndUserId(orderId, userId);
+            doReturn(Optional.empty()).when(orderRepository).findOrderByIdAndUserId(orderId, userId);
 
             // act
             Optional<Order> result = orderService.findOrderByIdAndUserId(orderId, userId);
 
             // assert
             assertThat(result).isEmpty();
-            verify(orderRepository, times(1)).findByIdAndUserId(orderId, userId);
+            verify(orderRepository, times(1)).findOrderByIdAndUserId(orderId, userId);
         }
     }
 
