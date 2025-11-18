@@ -9,6 +9,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -40,6 +41,10 @@ public class Product extends BaseEntity {
             @AttributeOverride(name = "quantity", column = @Column(name = "stock", nullable = false, unique = true))
     })
     private Stock stock;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     private boolean isDeleted;
 
