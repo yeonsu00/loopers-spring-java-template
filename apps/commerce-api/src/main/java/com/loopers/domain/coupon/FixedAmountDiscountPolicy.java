@@ -7,25 +7,25 @@ import lombok.Getter;
 @Getter
 public class FixedAmountDiscountPolicy implements DiscountPolicy {
 
-    private final long amount;
+    private final int fixedAmount;
 
-    public FixedAmountDiscountPolicy(long amount) {
-        validate(amount);
-        this.amount = amount;
+    public FixedAmountDiscountPolicy(int fixedAmount) {
+        validate(fixedAmount);
+        this.fixedAmount = fixedAmount;
     }
 
-    private void validate(long amount) {
-        if (amount < 0) {
+    private void validate(int fixedAmount) {
+        if (fixedAmount < 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "할인 금액은 0 이상이어야 합니다.");
         }
     }
 
     @Override
-    public long calculateDiscountAmount(long originalPrice) {
+    public int calculateDiscountAmount(int originalPrice) {
         if (originalPrice < 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "원가는 0 이상이어야 합니다.");
+            throw new CoreException(ErrorType.BAD_REQUEST, "할인 전 금액은 0 이상이어야 합니다.");
         }
-        return Math.min(originalPrice, amount);
+        return fixedAmount;
     }
 }
 

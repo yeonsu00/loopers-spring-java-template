@@ -51,7 +51,7 @@ class OrderServiceIntegrationTest {
             assertAll(
                     () -> assertThat(order.getUserId()).isEqualTo(userId),
                     () -> assertThat(order.getDelivery()).isEqualTo(delivery),
-                    () -> assertThat(order.getTotalPrice()).isEqualTo(0),
+                    () -> assertThat(order.getOriginalTotalPrice()).isEqualTo(0),
                     () -> assertThat(order.getOrderStatus()).isEqualTo(OrderStatus.CREATED),
                     () -> assertThat(order.getOrderItems()).isEmpty()
             );
@@ -104,7 +104,7 @@ class OrderServiceIntegrationTest {
             orderService.addTotalPrice(order, price, quantity);
 
             // assert
-            assertThat(order.getTotalPrice()).isEqualTo(20000);
+            assertThat(order.getOriginalTotalPrice()).isEqualTo(20000);
         }
 
         @DisplayName("여러 번 가격을 추가하면 총액이 누적된다.")
@@ -119,7 +119,7 @@ class OrderServiceIntegrationTest {
             orderService.addTotalPrice(order, 5000, 3);
 
             // assert
-            assertThat(order.getTotalPrice()).isEqualTo(35000);
+            assertThat(order.getOriginalTotalPrice()).isEqualTo(35000);
         }
     }
 

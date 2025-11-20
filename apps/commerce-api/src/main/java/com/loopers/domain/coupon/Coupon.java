@@ -51,21 +51,12 @@ public class Coupon extends BaseEntity {
         }
     }
 
-    public long calculateFinalPrice(long orderPrice) {
-        if (orderPrice < 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 금액은 0 이상이어야 합니다.");
-        }
-        DiscountPolicy policy = discount.toPolicy();
-        long discountAmount = policy.calculateDiscountAmount(orderPrice);
-        return orderPrice - discountAmount;
-    }
-
-    public long calculateDiscountAmount(long orderPrice) {
-        if (orderPrice < 0) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 금액은 0 이상이어야 합니다.");
-        }
-        DiscountPolicy policy = discount.toPolicy();
-        return policy.calculateDiscountAmount(orderPrice);
+    public static Coupon createCoupon(Long userId, String name, Discount discount) {
+        return Coupon.builder()
+                .userId(userId)
+                .name(name)
+                .discount(discount)
+                .build();
     }
 
     public void use() {
@@ -79,11 +70,8 @@ public class Coupon extends BaseEntity {
         return used;
     }
 
-    public static Coupon createCoupon(Long userId, String name, Discount discount) {
-        return Coupon.builder()
-                .userId(userId)
-                .name(name)
-                .discount(discount)
-                .build();
+    public int calculateDiscountPrice(int originalTotalPrice) {
+        DiscountPolicy policy = discount.toPolicy();
+        return policy.calculateDiscountAmount(originalTotalPrice);
     }
 }

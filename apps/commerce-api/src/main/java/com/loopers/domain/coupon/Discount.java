@@ -20,29 +20,29 @@ public class Discount {
     private PolicyType type;
 
     @Column(name = "discount_amount")
-    private Long discountAmount;
+    private Integer discountAmount;
 
     @Column(name = "discount_rate")
-    private Double discountRate;
+    private Integer discountPercent;
 
-    public static Discount createFixed(long amount) {
+    public static Discount createFixed(int amount) {
         if (amount < 0) {
             throw new CoreException(ErrorType.BAD_REQUEST, "할인 금액은 0 이상이어야 합니다.");
         }
         Discount info = new Discount();
         info.type = PolicyType.FIXED;
         info.discountAmount = amount;
-        info.discountRate = null;
+        info.discountPercent = null;
         return info;
     }
 
-    public static Discount createPercent(double rate) {
-        if (rate < 0 || rate > 1) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "할인율은 0 이상 1 이하여야 합니다.");
+    public static Discount createPercent(int percent) {
+        if (percent < 0 || percent > 100) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "할인 퍼센트는 0 이상 100 이하여야 합니다.");
         }
         Discount info = new Discount();
         info.type = PolicyType.PERCENT;
-        info.discountRate = rate;
+        info.discountPercent = percent;
         info.discountAmount = null;
         return info;
     }
@@ -52,20 +52,15 @@ public class Discount {
             throw new CoreException(ErrorType.BAD_REQUEST, "할인 정책 타입은 필수입니다.");
         }
 
-        return switch (type) {
-            case FIXED -> {
-                if (discountAmount == null) {
-                    throw new CoreException(ErrorType.BAD_REQUEST, "정액 할인 정책의 할인 금액은 필수입니다.");
-                }
-                yield new FixedAmountDiscountPolicy(discountAmount);
-            }
-            case PERCENT -> {
-                if (discountRate == null) {
-                    throw new CoreException(ErrorType.BAD_REQUEST, "정률 할인 정책의 할인율은 필수입니다.");
-                }
-                yield new RateDiscountPolicy(discountRate);
-            }
-        };
+        if (type == PolicyType.FIXED) {
+            return new FixedAmountDiscountPolicy(discountAmount);
+        }
+
+        if (type == PolicyType.PERCENT) {
+            return new PercentDiscountPolicy(discountPercent);
+        }
+
+        throw new CoreException(ErrorType.BAD_REQUEST, "알 수 없는 할인 정책 타입입니다.");
     }
 }
 
