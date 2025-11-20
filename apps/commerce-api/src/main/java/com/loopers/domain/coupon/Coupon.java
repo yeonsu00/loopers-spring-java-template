@@ -7,6 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,6 +30,10 @@ public class Coupon extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean used;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     @Builder
     private Coupon(Long userId, String name, Discount discount) {
