@@ -40,7 +40,7 @@ public class OrderFacade {
             orderService.createOrderItem(order, product, orderItemCommand.quantity());
             totalPrice += orderService.addTotalPrice(order, product.getPrice().getPrice(), orderItemCommand.quantity());
 
-            productService.reduceStock(product.getId(), orderItemCommand.quantity());
+            productService.reduceStock(product, orderItemCommand.quantity());
         }
 
         pointService.deductPoint(user.getId(), totalPrice);

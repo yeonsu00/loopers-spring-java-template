@@ -48,6 +48,6 @@ public class OrderService {
     }
 
     public Optional<Order> findOrderByIdAndUserId(Long orderId, Long userId) {
-        return orderRepository.findByIdAndUserId(orderId, userId);
+        return orderRepository.findOrderByIdAndUserId(orderId, userId);
     }
 }
