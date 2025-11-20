@@ -165,7 +165,7 @@ class OrderFacadeConcurrencyTest {
         }
     }
 
-    @DisplayName("동일한 유저가 동일한 상품을 포함한 여러 주문을 동시에 수행할 경우, 포인트가 정상적으로 차감되어야 한다.")
+    @DisplayName("동일한 유저가 1,000원의 상품을 각각 1, 2, 3, 4, 5개씩 동시에 주문하면, 총 15,000원이 차감되어야 한다.")
     @Test
     void shouldDeductPointCorrectly_whenSameUserCreatesOrdersWithSameProductConcurrently() throws Exception {
         // arrange
@@ -174,9 +174,8 @@ class OrderFacadeConcurrencyTest {
         CountDownLatch latch = new CountDownLatch(orderCount);
         List<Future<OrderInfo>> futures = new ArrayList<>();
 
-        // 모든 주문이 동일한 상품을 사용하지만 수량이 다름
         Long sameProductId = productIds.get(0);
-        int productPrice = 1000; // 첫 번째 상품 가격
+        int productPrice = 1000;
         int[] quantities = {1, 2, 3, 4, 5};
         int expectedTotalDeduction = 0;
         for (int quantity : quantities) {
