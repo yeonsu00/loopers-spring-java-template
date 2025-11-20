@@ -5,6 +5,7 @@ import com.loopers.support.error.ErrorType;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -12,6 +13,7 @@ public class CouponService {
 
     private final CouponRepository couponRepository;
 
+    @Transactional
     public Optional<Coupon> findCouponByIdAndUserId(Long couponId, Long userId) {
         return couponRepository.findCouponByIdAndUserId(couponId, userId);
     }
@@ -25,5 +27,10 @@ public class CouponService {
 
     public void usedCoupon(Coupon coupon) {
         coupon.use();
+    }
+
+    @Transactional
+    public void saveCoupon(Coupon coupon) {
+        couponRepository.saveCoupon(coupon);
     }
 }

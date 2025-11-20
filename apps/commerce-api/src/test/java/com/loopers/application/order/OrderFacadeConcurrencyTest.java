@@ -7,6 +7,9 @@ import com.loopers.application.point.PointFacade;
 import com.loopers.application.point.PointInfo;
 import com.loopers.application.user.UserCommand;
 import com.loopers.domain.brand.BrandService;
+import com.loopers.domain.coupon.Coupon;
+import com.loopers.domain.coupon.CouponService;
+import com.loopers.domain.coupon.Discount;
 import com.loopers.domain.product.LikeCount;
 import com.loopers.domain.product.Price;
 import com.loopers.domain.product.Product;
@@ -47,6 +50,9 @@ class OrderFacadeConcurrencyTest {
 
     @Autowired
     private PointFacade pointFacade;
+
+    @Autowired
+    private CouponService couponService;
 
     @MockitoSpyBean
     private BrandService brandService;
@@ -130,6 +136,7 @@ class OrderFacadeConcurrencyTest {
                     OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
                             loginId,
                             List.of(orderItemCommand),
+                            null,
                             DEFAULT_DELIVERY_COMMAND
                     );
 
@@ -199,6 +206,7 @@ class OrderFacadeConcurrencyTest {
                     OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
                             loginId,
                             List.of(orderItemCommand),
+                            null,
                             DEFAULT_DELIVERY_COMMAND
                     );
 
@@ -278,7 +286,7 @@ class OrderFacadeConcurrencyTest {
                             limitedProductId, 1);
 
                     OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
-                            buyerId, List.of(orderItemCommand), DEFAULT_DELIVERY_COMMAND);
+                            buyerId, List.of(orderItemCommand), null, DEFAULT_DELIVERY_COMMAND);
 
                     orderLockFacade.createOrder(createOrderCommand);
 
@@ -301,6 +309,149 @@ class OrderFacadeConcurrencyTest {
 
         Product finalProduct = productService.findProductById(limitedProductId).orElseThrow();
         assertThat(finalProduct.getStock().getQuantity()).isZero();
+    }
+
+    @DisplayName("동일한 쿠폰을 여러 주문에서 동시에 사용하려고 할 경우, 하나만 성공하고 나머지는 실패해야 한다.")
+    @Test
+    void shouldSucceedOnlyOneOrder_whenSameCouponIsUsedConcurrently() throws Exception {
+        // arrange
+        int concurrentRequestCount = 5;
+        Long userId = userService.findUserByLoginId(loginId).orElseThrow().getId();
+
+        Coupon coupon = Coupon.createCoupon(userId, "쿠폰", Discount.createFixed(500));
+        couponService.saveCoupon(coupon);
+        Long couponId = coupon.getId();
+
+        Long productId = productIds.get(0);
+        int productPrice = 1000;
+        int quantity = 1;
+        int discountAmount = 500;
+        int expectedTotalDeduction = (productPrice * quantity - discountAmount);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(concurrentRequestCount);
+        CountDownLatch latch = new CountDownLatch(concurrentRequestCount);
+
+        AtomicInteger successCount = new AtomicInteger();
+        AtomicInteger failCount = new AtomicInteger();
+
+        // act
+        for (int i = 0; i < concurrentRequestCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    latch.countDown();
+                    latch.await();
+
+                    OrderCommand.OrderItemCommand orderItemCommand = new OrderCommand.OrderItemCommand(
+                            productId,
+                            quantity
+                    );
+
+                    OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
+                            loginId,
+                            List.of(orderItemCommand),
+                            couponId,
+                            DEFAULT_DELIVERY_COMMAND
+                    );
+
+                    orderLockFacade.createOrder(createOrderCommand);
+                    successCount.incrementAndGet();
+                } catch (Exception e) {
+                    failCount.incrementAndGet();
+                }
+            });
+        }
+
+        executorService.shutdown();
+        if (!executorService.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+            executorService.shutdownNow();
+        }
+
+        // assert
+        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(failCount.get()).isEqualTo(concurrentRequestCount - 1);
+
+        Coupon finalCoupon = couponService.findCouponByIdAndUserId(couponId, userId).orElseThrow();
+        assertThat(finalCoupon.isUsed()).isTrue();
+
+        PointInfo finalPointInfo = pointFacade.getPointInfo(loginId);
+        int expectedFinalPoint = initialPoint - expectedTotalDeduction;
+        assertThat(finalPointInfo.totalPoint()).isEqualTo(expectedFinalPoint);
+    }
+
+    @DisplayName("서로 다른 쿠폰을 여러 주문에서 동시에 사용할 경우, 모두 성공해야 한다.")
+    @Test
+    void shouldSucceedAllOrders_whenDifferentCouponsAreUsedConcurrently() throws Exception {
+        // arrange
+        int orderCount = 5;
+        Long userId = userService.findUserByLoginId(loginId).orElseThrow().getId();
+        
+        List<Long> couponIds = new ArrayList<>();
+        for (int i = 0; i < orderCount; i++) {
+            Coupon coupon = Coupon.createCoupon(userId, "쿠폰" + i, Discount.createFixed(500 * (i + 1)));
+            couponService.saveCoupon(coupon);
+            couponIds.add(coupon.getId());
+        }
+
+        ExecutorService executorService = Executors.newFixedThreadPool(orderCount);
+        CountDownLatch latch = new CountDownLatch(orderCount);
+        List<Future<OrderInfo>> futures = new ArrayList<>();
+
+        int expectedTotalDeduction = 0;
+        int[] quantities = {1, 1, 1, 1, 1};
+
+        // act
+        for (int i = 0; i < orderCount; i++) {
+            final Long productId = productIds.get(i);
+            final Long couponId = couponIds.get(i);
+            final int quantity = quantities[i];
+            final int productPrice = 1000 * (i + 1);
+            final int discountAmount = 500 * (i + 1);
+            
+            expectedTotalDeduction += (productPrice * quantity - discountAmount);
+
+            Future<OrderInfo> future = executorService.submit(() -> {
+                try {
+                    latch.countDown();
+                    latch.await();
+
+                    OrderCommand.OrderItemCommand orderItemCommand = new OrderCommand.OrderItemCommand(
+                            productId,
+                            quantity
+                    );
+
+                    OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
+                            loginId,
+                            List.of(orderItemCommand),
+                            couponId,
+                            DEFAULT_DELIVERY_COMMAND
+                    );
+
+                    return orderLockFacade.createOrder(createOrderCommand);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            futures.add(future);
+        }
+
+        List<OrderInfo> results = new ArrayList<>();
+        for (Future<OrderInfo> future : futures) {
+            results.add(future.get());
+        }
+
+        executorService.shutdown();
+
+        // assert
+        assertThat(results).hasSize(orderCount);
+
+        for (Long couponId : couponIds) {
+            Coupon usedCoupon = couponService.findCouponByIdAndUserId(couponId, userId).orElseThrow();
+            assertThat(usedCoupon.isUsed()).isTrue();
+        }
+
+        PointInfo finalPointInfo = pointFacade.getPointInfo(loginId);
+        int expectedFinalPoint = initialPoint - expectedTotalDeduction;
+        assertThat(finalPointInfo.totalPoint()).isEqualTo(expectedFinalPoint);
     }
 }
 
