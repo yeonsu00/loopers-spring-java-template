@@ -6,10 +6,12 @@ import com.loopers.application.point.PointCommand;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.point.PointInfo;
 import com.loopers.application.user.UserCommand;
+import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.product.LikeCount;
 import com.loopers.domain.product.Price;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductRepository;
+import com.loopers.domain.product.ProductService;
 import com.loopers.domain.product.Stock;
 import com.loopers.domain.user.UserService;
 import com.loopers.utils.DatabaseCleanUp;
@@ -19,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,13 +43,23 @@ class OrderFacadeConcurrencyTest {
     private ProductRepository productRepository;
 
     @Autowired
+    private ProductService productService;
+
+    @Autowired
     private PointFacade pointFacade;
 
     @MockitoSpyBean
-    private com.loopers.domain.brand.BrandService brandService;
+    private BrandService brandService;
 
     @Autowired
     private DatabaseCleanUp databaseCleanUp;
+
+    private static final OrderCommand.DeliveryCommand DEFAULT_DELIVERY_COMMAND = new OrderCommand.DeliveryCommand(
+            "구매자",
+            "010-1234-5678",
+            "서울",
+            "상세주소"
+    );
 
     private String loginId;
     private List<Long> productIds;
@@ -100,22 +113,14 @@ class OrderFacadeConcurrencyTest {
 
         // act
         for (int i = 0; i < orderCount; i++) {
-            final int index = i;
             final int quantity = quantities[i];
-            final Long productId = productIds.get(index);
-            expectedTotalDeduction += (1000 * (index + 1)) * quantity;
+            final Long productId = productIds.get(i);
+            expectedTotalDeduction += (1000 * (i + 1)) * quantity;
 
             Future<OrderInfo> future = executorService.submit(() -> {
                 try {
                     latch.countDown();
                     latch.await();
-
-                    OrderCommand.DeliveryCommand deliveryCommand = new OrderCommand.DeliveryCommand(
-                            "홍길동",
-                            "010-1234-5678",
-                            "서울시 강남구",
-                            "테헤란로 " + (index + 1)
-                    );
 
                     OrderCommand.OrderItemCommand orderItemCommand = new OrderCommand.OrderItemCommand(
                             productId,
@@ -125,7 +130,7 @@ class OrderFacadeConcurrencyTest {
                     OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
                             loginId,
                             List.of(orderItemCommand),
-                            deliveryCommand
+                            DEFAULT_DELIVERY_COMMAND
                     );
 
                     return orderLockFacade.createOrder(createOrderCommand);
@@ -180,20 +185,12 @@ class OrderFacadeConcurrencyTest {
 
         // act
         for (int i = 0; i < orderCount; i++) {
-            final int index = i;
             final int quantity = quantities[i];
 
             Future<OrderInfo> future = executorService.submit(() -> {
                 try {
                     latch.countDown();
                     latch.await();
-
-                    OrderCommand.DeliveryCommand deliveryCommand = new OrderCommand.DeliveryCommand(
-                            "홍길동",
-                            "010-1234-5678",
-                            "서울시 강남구",
-                            "테헤란로 " + (index + 1)
-                    );
 
                     OrderCommand.OrderItemCommand orderItemCommand = new OrderCommand.OrderItemCommand(
                             sameProductId,
@@ -203,7 +200,7 @@ class OrderFacadeConcurrencyTest {
                     OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
                             loginId,
                             List.of(orderItemCommand),
-                            deliveryCommand
+                            DEFAULT_DELIVERY_COMMAND
                     );
 
                     return orderLockFacade.createOrder(createOrderCommand);
@@ -238,6 +235,73 @@ class OrderFacadeConcurrencyTest {
                     .sum();
             assertThat(actualOrderPrice).isEqualTo(expectedOrderPrice);
         }
+    }
+
+    @DisplayName("재고가 3개인 상품을 5명이 동시에 주문하면, 3명만 성공하고 2명은 실패해야 하며 재고는 0이 되어야 한다.")
+    @Test
+    void shouldSucceedOnlyAvailableStock_whenOrdersExceedStockConcurrently() throws InterruptedException {
+        // arrange
+        int stockQuantity = 3;
+        int concurrentRequestCount = 5;
+
+        Product limitedProduct = Product.createProduct(
+                "상품",
+                1L,
+                Price.createPrice(1000),
+                LikeCount.createLikeCount(0),
+                Stock.createStock(stockQuantity)
+        );
+        productRepository.saveProduct(limitedProduct);
+        Long limitedProductId = limitedProduct.getId();
+
+        List<String> buyerLoginIds = new ArrayList<>();
+        for (int i = 0; i < concurrentRequestCount; i++) {
+            String buyerId = "buyer" + i;
+            userService.signup(new UserCommand.SignupCommand(buyerId, "buyer" + i + "@test.com", "2000-01-01", "M"));
+            pointFacade.chargePoint(new PointCommand.ChargeCommand(buyerId, 10000));
+            buyerLoginIds.add(buyerId);
+        }
+
+        ExecutorService executorService = Executors.newFixedThreadPool(concurrentRequestCount);
+        CountDownLatch latch = new CountDownLatch(concurrentRequestCount);
+
+        AtomicInteger successCount = new AtomicInteger();
+        AtomicInteger failCount = new AtomicInteger();
+
+        // act
+        for (String buyerId : buyerLoginIds) {
+            executorService.submit(() -> {
+                try {
+                    latch.countDown();
+                    latch.await();
+
+                    OrderCommand.OrderItemCommand orderItemCommand = new OrderCommand.OrderItemCommand(
+                            limitedProductId, 1);
+
+                    OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
+                            buyerId, List.of(orderItemCommand), DEFAULT_DELIVERY_COMMAND);
+
+                    orderLockFacade.createOrder(createOrderCommand);
+
+                    successCount.incrementAndGet();
+                } catch (Exception e) {
+                    failCount.incrementAndGet();
+                }
+            });
+        }
+
+        executorService.shutdown();
+        if (!executorService.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+            executorService.shutdownNow();
+        }
+
+        // assert
+        assertThat(successCount.get()).isEqualTo(stockQuantity);
+
+        assertThat(failCount.get()).isEqualTo(concurrentRequestCount - stockQuantity);
+
+        Product finalProduct = productService.findProductById(limitedProductId).orElseThrow();
+        assertThat(finalProduct.getStock().getQuantity()).isZero();
     }
 }
 
