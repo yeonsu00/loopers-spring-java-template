@@ -370,7 +370,7 @@ class OrderFacadeConcurrencyTest {
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(failCount.get()).isEqualTo(concurrentRequestCount - 1);
 
-        Coupon finalCoupon = couponService.findCouponByIdAndUserId(couponId, userId).orElseThrow();
+        Coupon finalCoupon = couponService.getCouponByIdAndUserId(couponId, userId);
         assertThat(finalCoupon.isUsed()).isTrue();
 
         PointInfo finalPointInfo = pointFacade.getPointInfo(loginId);
@@ -445,7 +445,7 @@ class OrderFacadeConcurrencyTest {
         assertThat(results).hasSize(orderCount);
 
         for (Long couponId : couponIds) {
-            Coupon usedCoupon = couponService.findCouponByIdAndUserId(couponId, userId).orElseThrow();
+            Coupon usedCoupon = couponService.getCouponByIdAndUserId(couponId, userId);
             assertThat(usedCoupon.isUsed()).isTrue();
         }
 

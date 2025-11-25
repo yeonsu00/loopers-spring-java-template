@@ -49,9 +49,7 @@ public class OrderFacade {
         Long couponId = createOrderCommand.couponId();
         int discountPrice = 0;
         if (couponId != null) {
-            Coupon coupon = couponService.findCouponByIdAndUserId(couponId, user.getId())
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 찾을 수 없습니다."));
-
+            Coupon coupon = couponService.getCouponByIdAndUserId(couponId, user.getId());
             discountPrice = couponService.calculateDiscountPrice(coupon, originalTotalPrice);
             orderService.applyCoupon(order, coupon, discountPrice);
             couponService.usedCoupon(coupon);
