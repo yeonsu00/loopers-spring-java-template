@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final CouponRepository couponRepository;
 
     public Order createOrder(Long userId, Delivery delivery) {
         return Order.createOrder(userId, delivery);
