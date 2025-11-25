@@ -3,7 +3,6 @@ package com.loopers.interfaces.api.like;
 import com.loopers.application.like.LikeCommand;
 import com.loopers.application.like.LikeFacade;
 import com.loopers.application.like.LikeInfo;
-import com.loopers.application.like.LikeLockFacade;
 import com.loopers.application.product.ProductInfo;
 import com.loopers.interfaces.api.ApiResponse;
 import java.util.List;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/like")
 public class LikeV1Controller implements LikeV1ApiSpec {
 
-    private final LikeLockFacade likeLockFacade;
     private final LikeFacade likeFacade;
 
     @PostMapping("/products/{productId}")
@@ -31,7 +29,7 @@ public class LikeV1Controller implements LikeV1ApiSpec {
             @PathVariable Long productId
     ) {
         LikeCommand.LikeProductCommand command = new LikeCommand.LikeProductCommand(loginId, productId);
-        LikeInfo likeInfo = likeLockFacade.recordLike(command);
+        LikeInfo likeInfo = likeFacade.recordLike(command);
         LikeV1Dto.LikeResponse response = LikeV1Dto.LikeResponse.from(likeInfo);
 
         return ApiResponse.success(response);
@@ -44,7 +42,7 @@ public class LikeV1Controller implements LikeV1ApiSpec {
             @PathVariable Long productId
     ) {
         LikeCommand.LikeProductCommand command = new LikeCommand.LikeProductCommand(loginId, productId);
-        LikeInfo likeInfo = likeLockFacade.cancelLike(command);
+        LikeInfo likeInfo = likeFacade.cancelLike(command);
         LikeV1Dto.LikeResponse response = LikeV1Dto.LikeResponse.from(likeInfo);
 
         return ApiResponse.success(response);

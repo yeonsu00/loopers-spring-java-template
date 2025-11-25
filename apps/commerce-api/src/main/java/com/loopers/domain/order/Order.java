@@ -33,6 +33,7 @@ public class Order extends BaseEntity {
     @Builder.Default
     List<OrderItem> orderItems = new ArrayList<>();
 
+    @Column(nullable = false)
     private Integer originalTotalPrice;
 
     private Long couponId;
@@ -96,6 +97,9 @@ public class Order extends BaseEntity {
 
     public int addPrice(int price) {
         validatePrice(price);
+        if (this.originalTotalPrice == null) {
+            this.originalTotalPrice = 0;
+        }
         this.originalTotalPrice = this.originalTotalPrice + price;
         return this.originalTotalPrice;
     }

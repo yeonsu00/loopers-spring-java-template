@@ -37,7 +37,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 class OrderFacadeConcurrencyTest {
 
     @Autowired
-    private OrderLockFacade orderLockFacade;
+    private OrderFacade orderFacade;
 
     @Autowired
     private UserService userService;
@@ -140,7 +140,7 @@ class OrderFacadeConcurrencyTest {
                             DEFAULT_DELIVERY_COMMAND
                     );
 
-                    return orderLockFacade.createOrder(createOrderCommand);
+                    return orderFacade.createOrder(createOrderCommand);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -210,7 +210,7 @@ class OrderFacadeConcurrencyTest {
                             DEFAULT_DELIVERY_COMMAND
                     );
 
-                    return orderLockFacade.createOrder(createOrderCommand);
+                    return orderFacade.createOrder(createOrderCommand);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -288,7 +288,7 @@ class OrderFacadeConcurrencyTest {
                     OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
                             buyerId, List.of(orderItemCommand), null, DEFAULT_DELIVERY_COMMAND);
 
-                    orderLockFacade.createOrder(createOrderCommand);
+                    orderFacade.createOrder(createOrderCommand);
 
                     successCount.incrementAndGet();
                 } catch (Exception e) {
@@ -353,7 +353,7 @@ class OrderFacadeConcurrencyTest {
                             DEFAULT_DELIVERY_COMMAND
                     );
 
-                    orderLockFacade.createOrder(createOrderCommand);
+                    orderFacade.createOrder(createOrderCommand);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
@@ -370,7 +370,7 @@ class OrderFacadeConcurrencyTest {
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(failCount.get()).isEqualTo(concurrentRequestCount - 1);
 
-        Coupon finalCoupon = couponService.findCouponByIdAndUserId(couponId, userId).orElseThrow();
+        Coupon finalCoupon = couponService.getCouponByIdAndUserId(couponId, userId);
         assertThat(finalCoupon.isUsed()).isTrue();
 
         PointInfo finalPointInfo = pointFacade.getPointInfo(loginId);
@@ -426,7 +426,7 @@ class OrderFacadeConcurrencyTest {
                             DEFAULT_DELIVERY_COMMAND
                     );
 
-                    return orderLockFacade.createOrder(createOrderCommand);
+                    return orderFacade.createOrder(createOrderCommand);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -445,7 +445,7 @@ class OrderFacadeConcurrencyTest {
         assertThat(results).hasSize(orderCount);
 
         for (Long couponId : couponIds) {
-            Coupon usedCoupon = couponService.findCouponByIdAndUserId(couponId, userId).orElseThrow();
+            Coupon usedCoupon = couponService.getCouponByIdAndUserId(couponId, userId);
             assertThat(usedCoupon.isUsed()).isTrue();
         }
 

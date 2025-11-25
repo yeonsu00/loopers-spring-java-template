@@ -48,28 +48,30 @@ class CouponServiceIntegrationTest {
             doReturn(Optional.of(coupon)).when(couponRepository).findCouponByIdAndUserId(couponId, userId);
 
             // act
-            Optional<Coupon> result = couponService.findCouponByIdAndUserId(couponId, userId);
+            Coupon result = couponService.getCouponByIdAndUserId(couponId, userId);
 
             // assert
-            assertThat(result).isPresent();
-            assertThat(result.get()).isEqualTo(coupon);
+            assertThat(result).isNotNull();
+            assertThat(result).isEqualTo(coupon);
             verify(couponRepository, times(1)).findCouponByIdAndUserId(couponId, userId);
         }
 
-        @DisplayName("존재하지 않는 쿠폰을 조회하면 빈 Optional이 반환된다.")
+        @DisplayName("존재하지 않는 쿠폰을 조회하면 예외가 발생한다.")
         @Test
-        void returnsEmpty_whenCouponDoesNotExist() {
+        void throwsException_whenCouponDoesNotExist() {
             // arrange
             Long couponId = 999L;
             Long userId = 1L;
 
             doReturn(Optional.empty()).when(couponRepository).findCouponByIdAndUserId(couponId, userId);
 
-            // act
-            Optional<Coupon> result = couponService.findCouponByIdAndUserId(couponId, userId);
+            // act & assert
+            CoreException exception = assertThrows(CoreException.class, () -> {
+                couponService.getCouponByIdAndUserId(couponId, userId);
+            });
 
-            // assert
-            assertThat(result).isEmpty();
+            assertThat(exception.getErrorType()).isEqualTo(ErrorType.NOT_FOUND);
+            assertThat(exception.getMessage()).contains("쿠폰을 찾을 수 없습니다.");
             verify(couponRepository, times(1)).findCouponByIdAndUserId(couponId, userId);
         }
     }

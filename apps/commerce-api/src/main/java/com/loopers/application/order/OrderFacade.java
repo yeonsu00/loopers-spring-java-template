@@ -14,6 +14,10 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,12 @@ public class OrderFacade {
     private final PointService pointService;
     private final CouponService couponService;
 
+    @Retryable(
+            retryFor = OptimisticLockingFailureException.class,
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 100),
+            recover = "recoverCreateOrder"
+    )
     @Transactional
     public OrderInfo createOrder(OrderCommand.CreateOrderCommand createOrderCommand) {
         User user = userService.findUserByLoginId(createOrderCommand.loginId())
@@ -49,9 +59,7 @@ public class OrderFacade {
         Long couponId = createOrderCommand.couponId();
         int discountPrice = 0;
         if (couponId != null) {
-            Coupon coupon = couponService.findCouponByIdAndUserId(couponId, user.getId())
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "쿠폰을 찾을 수 없습니다."));
-
+            Coupon coupon = couponService.getCouponByIdAndUserId(couponId, user.getId());
             discountPrice = couponService.calculateDiscountPrice(coupon, originalTotalPrice);
             orderService.applyCoupon(order, coupon, discountPrice);
             couponService.usedCoupon(coupon);
@@ -61,6 +69,11 @@ public class OrderFacade {
 
         orderService.saveOrder(order);
         return OrderInfo.from(order, order.getOrderItems(), delivery);
+    }
+
+    @Recover
+    public OrderInfo recoverCreateOrder(OptimisticLockingFailureException e, OrderCommand.CreateOrderCommand createOrderCommand) {
+        throw new CoreException(ErrorType.CONFLICT, "주문 생성 중 동시성 충돌이 발생했습니다. 다시 시도해주세요.");
     }
 
     @Transactional
