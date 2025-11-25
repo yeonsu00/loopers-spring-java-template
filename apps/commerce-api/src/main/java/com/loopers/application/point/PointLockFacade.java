@@ -1,6 +1,7 @@
 package com.loopers.application.point;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
@@ -15,7 +16,7 @@ public class PointLockFacade {
         for (int retryCount = 0; retryCount < MAX_RETRY_ATTEMPTS; retryCount++) {
             try {
                 return pointFacade.chargePoint(chargeCommand);
-            } catch (Exception e) {
+            } catch (ObjectOptimisticLockingFailureException e) {
                 if (retryCount == MAX_RETRY_ATTEMPTS - 1) {
                     throw e;
                 }
