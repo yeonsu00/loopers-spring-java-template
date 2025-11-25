@@ -25,13 +25,13 @@ public class ProductFacade {
         List<Product> products;
 
         if (ProductSort.LATEST.equals(command.sort())) {
-            products = productService.findProductsByLatestWithBrandName(
+            products = productService.findProductsByLatest(
                     command.brandId(), command.page(), command.size());
         } else if (ProductSort.PRICE_ASC.equals(command.sort())) {
-            products = productService.findProductsByPriceAscWithBrandName(
+            products = productService.findProductsByPriceAsc(
                     command.brandId(), command.page(), command.size());
         } else if (ProductSort.LIKES_DESC.equals(command.sort())) {
-            products = productService.findProductsByLikesDescWithBrandName(
+            products = productService.findProductsByLikesDesc(
                     command.brandId(), command.page(), command.size());
         } else {
             throw new CoreException(ErrorType.BAD_REQUEST, "지원하지 않는 정렬 기준입니다: " + command.sort());
