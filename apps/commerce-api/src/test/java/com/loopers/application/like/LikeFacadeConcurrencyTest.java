@@ -31,7 +31,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 class LikeFacadeConcurrencyTest {
 
     @Autowired
-    private LikeLockFacade likeLockFacade;
+    private LikeFacade likeFacade;
 
     @Autowired
     private UserService userService;
@@ -106,7 +106,7 @@ class LikeFacadeConcurrencyTest {
                             productId
                     );
 
-                    likeLockFacade.recordLike(command);
+                    likeFacade.recordLike(command);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
@@ -136,7 +136,7 @@ class LikeFacadeConcurrencyTest {
                     loginId,
                     productId
             );
-            likeLockFacade.recordLike(command);
+            likeFacade.recordLike(command);
         }
 
         int concurrentRequestCount = 4;
@@ -157,7 +157,7 @@ class LikeFacadeConcurrencyTest {
                             productId
                     );
 
-                    likeLockFacade.cancelLike(command);
+                    likeFacade.cancelLike(command);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
@@ -188,7 +188,7 @@ class LikeFacadeConcurrencyTest {
                     userLoginIds.get(i),
                     productId
             );
-            likeLockFacade.recordLike(command);
+            likeFacade.recordLike(command);
         }
 
         int concurrentRequestCount = userLoginIds.size();
@@ -213,9 +213,9 @@ class LikeFacadeConcurrencyTest {
                     );
 
                     if (index < halfCount) {
-                        likeLockFacade.cancelLike(command);
+                        likeFacade.cancelLike(command);
                     } else {
-                        likeLockFacade.recordLike(command);
+                        likeFacade.recordLike(command);
                     }
                     successCount.incrementAndGet();
                 } catch (Exception e) {

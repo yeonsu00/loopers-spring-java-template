@@ -37,7 +37,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 class OrderFacadeConcurrencyTest {
 
     @Autowired
-    private OrderLockFacade orderLockFacade;
+    private OrderFacade orderFacade;
 
     @Autowired
     private UserService userService;
@@ -140,7 +140,7 @@ class OrderFacadeConcurrencyTest {
                             DEFAULT_DELIVERY_COMMAND
                     );
 
-                    return orderLockFacade.createOrder(createOrderCommand);
+                    return orderFacade.createOrder(createOrderCommand);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -210,7 +210,7 @@ class OrderFacadeConcurrencyTest {
                             DEFAULT_DELIVERY_COMMAND
                     );
 
-                    return orderLockFacade.createOrder(createOrderCommand);
+                    return orderFacade.createOrder(createOrderCommand);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -288,7 +288,7 @@ class OrderFacadeConcurrencyTest {
                     OrderCommand.CreateOrderCommand createOrderCommand = new OrderCommand.CreateOrderCommand(
                             buyerId, List.of(orderItemCommand), null, DEFAULT_DELIVERY_COMMAND);
 
-                    orderLockFacade.createOrder(createOrderCommand);
+                    orderFacade.createOrder(createOrderCommand);
 
                     successCount.incrementAndGet();
                 } catch (Exception e) {
@@ -353,7 +353,7 @@ class OrderFacadeConcurrencyTest {
                             DEFAULT_DELIVERY_COMMAND
                     );
 
-                    orderLockFacade.createOrder(createOrderCommand);
+                    orderFacade.createOrder(createOrderCommand);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
@@ -426,7 +426,7 @@ class OrderFacadeConcurrencyTest {
                             DEFAULT_DELIVERY_COMMAND
                     );
 
-                    return orderLockFacade.createOrder(createOrderCommand);
+                    return orderFacade.createOrder(createOrderCommand);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

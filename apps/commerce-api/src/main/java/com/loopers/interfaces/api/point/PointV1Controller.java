@@ -3,7 +3,6 @@ package com.loopers.interfaces.api.point;
 import com.loopers.application.point.PointCommand;
 import com.loopers.application.point.PointFacade;
 import com.loopers.application.point.PointInfo;
-import com.loopers.application.point.PointLockFacade;
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/point")
 public class PointV1Controller implements PointV1ApiSpec {
 
-    private final PointLockFacade pointLockFacade;
     private final PointFacade pointFacade;
 
     @PostMapping
@@ -32,7 +30,7 @@ public class PointV1Controller implements PointV1ApiSpec {
     ) {
         PointCommand.ChargeCommand chargeCommand = pointRequest.toCommand(loginId);
 
-        PointInfo pointInfo = pointLockFacade.chargePoint(chargeCommand);
+        PointInfo pointInfo = pointFacade.chargePoint(chargeCommand);
         PointV1Dto.PointResponse response = PointV1Dto.PointResponse.from(pointInfo);
 
         return ApiResponse.success(response);
