@@ -130,7 +130,7 @@ function getProducts(params, metric) {
     }
     
     // 응답 검증
-    const success = check(response, {
+    const checks = {
         'status is 200': (r) => r.status === 200,
         'response has data': (r) => {
             try {
@@ -146,7 +146,21 @@ function getProducts(params, metric) {
             }
         },
         'response time < 1000ms': (r) => r.timings.duration < 1000,
-    });
+    };
+    
+    const success = check(response, checks);
+    
+    // 실패 시 상세 정보 로깅 (처음 몇 개만)
+    if (!success && Math.random() < 0.01) { // 1% 확률로만 로깅하여 로그 과다 방지
+        try {
+            const body = JSON.parse(response.body);
+            console.error(`Request failed - URL: ${url}`);
+            console.error(`Status: ${response.status}, Duration: ${response.timings.duration}ms`);
+            console.error(`Response body: ${JSON.stringify(body).substring(0, 200)}`);
+        } catch (e) {
+            console.error(`Request failed - URL: ${url}, Status: ${response.status}, Body parse error`);
+        }
+    }
     
     errorRate.add(!success);
     
@@ -159,8 +173,7 @@ function getProducts(params, metric) {
 
 export default function () {
     // 스트레스 테스트 모드에서는 sleep 시간을 줄여 더 빠르게 요청
-    // 일반 모드에서도 sleep 시간을 줄여 더 많은 요청 처리
-    const sleepTime = TEST_MODE === 'stress' ? 0.05 : 0.2;
+    const sleepTime = TEST_MODE === 'stress' ? 0.1 : 1;
     
     // 시나리오 1: 최신순 정렬 조회 (LATEST)
     const latestParams = {
