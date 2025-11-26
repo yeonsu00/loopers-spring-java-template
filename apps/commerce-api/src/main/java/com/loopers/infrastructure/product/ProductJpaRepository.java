@@ -16,13 +16,13 @@ public interface ProductJpaRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findByIdWithLock(@Param("id") Long id);
 
-    @Query("SELECT p FROM Product p WHERE (:brandId IS NULL OR p.brandId = :brandId) AND p.isDeleted = false ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Product p WHERE p.isDeleted = false AND (:brandId IS NULL OR p.brandId = :brandId) ORDER BY p.createdAt DESC")
     List<Product> findProductsByLatest(@Param("brandId") Long brandId, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE (:brandId IS NULL OR p.brandId = :brandId) AND p.isDeleted = false ORDER BY p.price.price ASC")
+    @Query("SELECT p FROM Product p WHERE p.isDeleted = false AND (:brandId IS NULL OR p.brandId = :brandId) ORDER BY p.price.price ASC")
     List<Product> findProductsByPriceAsc(@Param("brandId") Long brandId, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE (:brandId IS NULL OR p.brandId = :brandId) AND p.isDeleted = false ORDER BY p.likeCount.count DESC")
+    @Query("SELECT p FROM Product p WHERE p.isDeleted = false AND (:brandId IS NULL OR p.brandId = :brandId) ORDER BY p.likeCount.count DESC")
     List<Product> findProductsByLikesDesc(@Param("brandId") Long brandId, Pageable pageable);
 }
 

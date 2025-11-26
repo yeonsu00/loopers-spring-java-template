@@ -16,16 +16,13 @@ import lombok.Getter;
 
 @Entity
 @Table(
-    name = "products",
-    indexes = {
-        @Index(name = "idx_products_brand_deleted_created", columnList = "brand_id,is_deleted,created_at"),
-        @Index(name = "idx_products_brand_deleted_price", columnList = "brand_id,is_deleted,price"),
-        @Index(name = "idx_products_brand_deleted_likes", columnList = "brand_id,is_deleted,like_count"),
-        
-        @Index(name = "idx_products_deleted_created", columnList = "is_deleted,created_at"),
-        @Index(name = "idx_products_deleted_price", columnList = "is_deleted,price"),
-        @Index(name = "idx_products_deleted_likes", columnList = "is_deleted,like_count")
-    }
+        name = "products",
+        indexes = {
+                @Index(name = "idx_brand_id", columnList = "brand_id"),
+                @Index(name = "idx_global_price", columnList = "is_deleted, price"),
+                @Index(name = "idx_global_likes", columnList = "is_deleted, like_count DESC"),
+                @Index(name = "idx_global_latest", columnList = "is_deleted, created_at DESC")
+        }
 )
 @Getter
 public class Product extends BaseEntity {
