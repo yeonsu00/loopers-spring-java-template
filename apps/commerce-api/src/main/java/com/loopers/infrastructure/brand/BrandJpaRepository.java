@@ -12,6 +12,6 @@ public interface BrandJpaRepository extends JpaRepository<Brand, Long> {
     List<Brand> findByIds(@Param("brandIds") List<Long> brandIds);
 
     @Query("SELECT b.name FROM Brand b WHERE b.id = :brandId AND b.deletedAt IS NULL")
-    String findNameById(Long brandId);
+    String findNameById(@Param("brandId") Long brandId);
 }
 
