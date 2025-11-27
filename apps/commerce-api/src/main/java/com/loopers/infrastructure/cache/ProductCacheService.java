@@ -23,9 +23,9 @@ public class ProductCacheService {
     private static final String PRODUCT_DETAIL_PREFIX = "product:detail:";
     private static final String PRODUCT_LIST_PREFIX = "product:list:";
     
-    private static final Duration PRODUCT_DETAIL_TTL = Duration.ofHours(6);
-    private static final Duration PRODUCT_LIST_TTL = Duration.ofMinutes(10);
-    private static final long REFRESH_THRESHOLD_SECONDS = 30;
+    private static final Duration PRODUCT_DETAIL_TTL = Duration.ofMinutes(1);
+    private static final Duration PRODUCT_LIST_TTL = Duration.ofMinutes(1);
+    private static final long REFRESH_THRESHOLD_SECONDS = 10;
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisTemplate<String, Object> redisTemplateMaster;
@@ -63,7 +63,7 @@ public class ProductCacheService {
     }
 
     /**
-     * 상품 상세 조회 (Look-Aside, Stale-While-Revalidate)
+     * 상품 상세 조회
      */
     public ProductInfo getProduct(Long productId, Supplier<ProductInfo> dbSupplier) {
         String cacheKey = getProductDetailKey(productId);
@@ -92,7 +92,7 @@ public class ProductCacheService {
     }
 
     /**
-     * 상품 목록 조회 (Look-Aside, Stale-While-Revalidate)
+     * 상품 목록 조회
      */
     public List<ProductInfo> getProductList(Long brandId, ProductSort sort, int page, int size, Supplier<List<ProductInfo>> dbSupplier) {
         String cacheKey = getProductListKey(brandId, sort, page, size);
@@ -171,68 +171,4 @@ public class ProductCacheService {
         }
     }
 
-    /**
-     * 상품 상세 캐시 무효화
-     */
-    public void invalidateProduct(Long productId) {
-        String key = getProductDetailKey(productId);
-        redisTemplateMaster.delete(key);
-        log.info("상품 상세 캐시 무효화 완료: productId={}", productId);
-    }
-
-    /**
-     * 상품 상세 캐시를 즉시 갱신 (Write-Through)
-     */
-    public void updateProductCache(Long productId, ProductInfo productInfo) {
-        String cacheKey = getProductDetailKey(productId);
-        redisTemplateMaster.opsForValue().set(cacheKey, productInfo, PRODUCT_DETAIL_TTL);
-        log.info("상품 상세 캐시 갱신 완료: productId={}", productId);
-    }
-
-    /**
-     * 상품 상세 캐시를 비동기로 갱신 (Write-Behind)
-     */
-    @Async("cacheRefreshExecutor")
-    public void updateProductCacheAsync(Long productId, ProductInfo productInfo) {
-        String cacheKey = getProductDetailKey(productId);
-        
-        Boolean exists = redisTemplateMaster.hasKey(cacheKey);
-        if (exists) {
-            redisTemplateMaster.opsForValue().set(cacheKey, productInfo, PRODUCT_DETAIL_TTL);
-            log.info("상품 상세 캐시 비동기 갱신 완료: productId={}", productId);
-        } else {
-            log.debug("상품 상세 캐시가 존재하지 않아 갱신하지 않음: productId={}", productId);
-        }
-    }
-
-    /**
-     * 상품 목록 캐시 무효화
-     */
-    public void invalidateProductList(Long brandId) {
-        String pattern;
-        if (brandId != null) {
-            pattern = PRODUCT_LIST_PREFIX + "brandId=" + brandId + "*";
-        } else {
-            pattern = PRODUCT_LIST_PREFIX + "*";
-        }
-
-        redisTemplateMaster.keys(pattern).forEach(redisTemplateMaster::delete);
-        log.info("상품 목록 캐시 무효화 완료: brandId={}", brandId);
-    }
-
-    /**
-     * 상품 목록 캐시를 비동기로 무효화
-     */
-    @Async("cacheRefreshExecutor")
-    public void invalidateProductListAsync(Long brandId) {
-        String pattern;
-        if (brandId != null) {
-            pattern = PRODUCT_LIST_PREFIX + "brandId=" + brandId + "*";
-        } else {
-            pattern = PRODUCT_LIST_PREFIX + "*";
-        }
-
-        redisTemplateMaster.keys(pattern).forEach(redisTemplateMaster::delete);
-        log.info("상품 목록 캐시 비동기 무효화 완료: brandId={}", brandId);
-    }
 }
