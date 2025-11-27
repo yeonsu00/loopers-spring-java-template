@@ -7,6 +7,7 @@ import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
+import com.loopers.infrastructure.cache.ProductCacheService;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
@@ -29,6 +30,7 @@ public class LikeFacade {
     private final LikeService likeService;
     private final ProductService productService;
     private final BrandService brandService;
+    private final ProductCacheService productCacheService;
 
     @Retryable(
             retryFor = OptimisticLockingFailureException.class,
@@ -46,6 +48,11 @@ public class LikeFacade {
         Product product;
         if (wasCreated) {
             product = productService.increaseLikeCount(command.productId());
+            // DB 업데이트 후 캐시 비동기 갱신 및 무효화
+            String brandName = brandService.findBrandNameById(product.getBrandId());
+            ProductInfo productInfo = ProductInfo.from(product, brandName);
+            productCacheService.updateProductCacheAsync(command.productId(), productInfo);
+            productCacheService.invalidateProductListAsync(null); // 모든 목록 캐시 비동기 무효화
         } else {
             product = productService.findProductById(command.productId())
                     .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
@@ -78,6 +85,11 @@ public class LikeFacade {
         Product product;
         if (wasDeleted) {
             product = productService.decreaseLikeCount(command.productId());
+            // DB 업데이트 후 캐시 비동기 갱신 및 무효화
+            String brandName = brandService.findBrandNameById(product.getBrandId());
+            ProductInfo productInfo = ProductInfo.from(product, brandName);
+            productCacheService.updateProductCacheAsync(command.productId(), productInfo);
+            productCacheService.invalidateProductListAsync(product.getBrandId()); // 모든 목록 캐시 비동기 무효화
         } else {
             product = productService.findProductById(command.productId())
                     .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
