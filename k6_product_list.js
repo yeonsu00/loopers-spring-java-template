@@ -12,6 +12,7 @@ import { Rate, Trend } from 'k6/metrics';
 // 3. 좋아요 내림차순 정렬 조회 (LIKES_DESC)
 // 4. 브랜드 필터링 조회
 // 5. 페이지네이션 테스트
+// 6. 좋아요 등록
 //
 // 실행 방법:
 // 
@@ -21,16 +22,11 @@ import { Rate, Trend } from 'k6/metrics';
 // 스트레스 테스트:
 // TEST_MODE=stress k6 run k6_product_list.js
 //
-// 옵션 예시:
-// k6 run --vus 50 --duration 30s k6_product_list.js
-// TEST_MODE=stress k6 run k6_product_list.js
-//
 // ============================================================================
 
 // 테스트 모드 설정 (기본: load, 스트레스: stress)
 const TEST_MODE = __ENV.TEST_MODE || 'load';
 
-// 커스텀 메트릭
 const errorRate = new Rate('errors');
 const responseTimeLatest = new Trend('response_time_latest');
 const responseTimePriceAsc = new Trend('response_time_price_asc');
@@ -38,47 +34,39 @@ const responseTimeLikesDesc = new Trend('response_time_likes_desc');
 const responseTimeBrandFilter = new Trend('response_time_brand_filter');
 const responseTimePagination = new Trend('response_time_pagination');
 
-// 테스트 설정 (모드에 따라 다름)
 function getTestOptions() {
     if (TEST_MODE === 'stress') {
-        // 스트레스 테스트 설정: 시스템의 한계점을 찾기 위한 높은 부하
+        // 스트레스 테스트 설정
         return {
             stages: [
-                // 빠른 ramp-up으로 시스템에 부하 가하기
-                { duration: '1m', target: 100 },   // 1분 동안 100명으로 증가
-                { duration: '2m', target: 200 },   // 2분 동안 200명으로 증가
-                { duration: '3m', target: 300 },   // 3분 동안 300명으로 증가
-                { duration: '5m', target: 500 },  // 5분 동안 500명으로 증가 (최대 부하)
-                { duration: '5m', target: 500 },  // 5분 동안 500명 유지 (최대 부하 지속)
-                { duration: '2m', target: 300 },   // 2분 동안 300명으로 감소
-                { duration: '1m', target: 100 },   // 1분 동안 100명으로 감소
-                { duration: '1m', target: 0 },     // 1분 동안 0명으로 감소
+                { duration: '1m', target: 100 },
+                { duration: '2m', target: 200 },
+                { duration: '3m', target: 300 },
+                { duration: '5m', target: 500 },
+                { duration: '5m', target: 500 },
+                { duration: '2m', target: 300 },
+                { duration: '1m', target: 100 },
+                { duration: '1m', target: 0 },
             ],
             thresholds: {
-                // 스트레스 테스트는 한계점을 찾는 것이므로 더 관대한 임계값
-                // 하지만 여전히 모니터링은 필요
-                http_req_duration: ['p(95)<2000', 'p(99)<5000'],  // 스트레스 상황에서는 더 느릴 수 있음
-                errors: ['rate<0.10'],  // 스트레스 상황에서는 10%까지 허용
-                http_req_failed: ['rate<0.20'],  // 스트레스 상황에서는 20%까지 허용
+                http_req_duration: ['p(95)<2000', 'p(99)<5000'],
+                errors: ['rate<0.10'],
+                http_req_failed: ['rate<0.20'],
             },
         };
     } else {
         // 기본 부하 테스트 설정
         return {
             stages: [
-                // Ramp-up: 점진적으로 부하 증가
-                { duration: '30s', target: 50 },   // 30초 동안 50명의 가상 사용자로 증가
-                { duration: '1m', target: 100 },   // 1분 동안 100명으로 증가
-                { duration: '2m', target: 100 },   // 2분 동안 100명 유지
-                { duration: '30s', target: 50 },    // 30초 동안 50명으로 감소
-                { duration: '30s', target: 0 },   // 30초 동안 0명으로 감소
+                { duration: '30s', target: 50 },
+                { duration: '1m', target: 100 },
+                { duration: '2m', target: 100 },
+                { duration: '30s', target: 50 },
+                { duration: '30s', target: 0 },
             ],
             thresholds: {
-                // 전체 요청의 95%가 500ms 이내에 완료되어야 함
                 http_req_duration: ['p(95)<500', 'p(99)<1000'],
-                // 에러율이 1% 미만이어야 함
                 errors: ['rate<0.01'],
-                // HTTP 상태 코드가 200인 비율이 95% 이상이어야 함
                 http_req_failed: ['rate<0.05'],
             },
         };
@@ -87,21 +75,24 @@ function getTestOptions() {
 
 export const options = getTestOptions();
 
-// 기본 URL 설정
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const API_BASE = `${BASE_URL}/api/v1/products`;
+const LIKE_API_BASE = `${BASE_URL}/api/v1/like/products`;
 
-// 브랜드 ID 목록 (1~100 사이 랜덤 선택)
 function getRandomBrandId() {
     return Math.floor(Math.random() * 100) + 1;
 }
 
-// 랜덤 페이지 번호 (0~9)
 function getRandomPage() {
     return Math.floor(Math.random() * 10);
 }
 
-// 쿼리 파라미터를 URL 문자열로 변환
+function getRandomUserId() {
+    const users = ['user1', 'user2'];
+    return users[Math.floor(Math.random() * users.length)];
+}
+
+
 function buildQueryString(params) {
     const parts = [];
     for (const key in params) {
@@ -123,20 +114,17 @@ function getProducts(params, metric) {
     });
     
     const duration = Date.now() - startTime;
-    
-    // 메트릭 기록
+
     if (metric) {
         metric.add(duration);
     }
-    
-    // 응답 검증
+
     const checks = {
         'status is 200': (r) => r.status === 200,
         'response has data': (r) => {
             try {
                 const body = JSON.parse(r.body);
-                // ApiResponse 구조: { meta: { result: 'SUCCESS' }, data: { products: [...] } }
-                return body.meta && 
+                return body.meta &&
                        body.meta.result === 'SUCCESS' && 
                        body.data && 
                        body.data.products && 
@@ -149,9 +137,8 @@ function getProducts(params, metric) {
     };
     
     const success = check(response, checks);
-    
-    // 실패 시 상세 정보 로깅 (처음 몇 개만)
-    if (!success && Math.random() < 0.01) { // 1% 확률로만 로깅하여 로그 과다 방지
+
+    if (!success && (response.status >= 500 || Math.random() < 0.01)) {
         try {
             const body = JSON.parse(response.body);
             console.error(`Request failed - URL: ${url}`);
@@ -167,13 +154,60 @@ function getProducts(params, metric) {
     return { response, success, duration };
 }
 
+// 좋아요 등록 헬퍼 함수
+function recordLike(productId, loginId) {
+    const url = `${LIKE_API_BASE}/${productId}`;
+    
+    const response = http.post(url, null, {
+        headers: {
+            'X-USER-ID': loginId,
+            'Content-Type': 'application/json',
+        },
+        tags: { name: 'like_record' },
+    });
+
+    const checks = {
+        'status is 200 or 404': (r) => r.status === 200 || r.status === 404,
+        'response has data': (r) => {
+            try {
+                const body = JSON.parse(r.body);
+                if (r.status === 404) {
+                    return true;
+                }
+                return body.meta && body.meta.result === 'SUCCESS';
+            } catch (e) {
+                return false;
+            }
+        },
+    };
+    
+    const success = check(response, checks);
+
+    if (!success && response.status >= 500) {
+        try {
+            const body = JSON.parse(response.body);
+            console.error(`Like record failed - URL: ${url}, Status: ${response.status}`);
+            console.error(`Response body: ${JSON.stringify(body).substring(0, 200)}`);
+        } catch (e) {
+            console.error(`Like record failed - URL: ${url}, Status: ${response.status}, Body parse error`);
+        }
+    }
+    
+    errorRate.add(!success);
+    
+    return { response, success };
+}
+
 // ============================================================================
 // 테스트 시나리오
 // ============================================================================
 
 export default function () {
-    // 스트레스 테스트 모드에서는 sleep 시간을 줄여 더 빠르게 요청
     const sleepTime = TEST_MODE === 'stress' ? 0.1 : 1;
+
+    const loginId = getRandomUserId();
+
+    const iteration = __ITER || 0;
     
     // 시나리오 1: 최신순 정렬 조회 (LATEST)
     const latestParams = {
@@ -183,11 +217,7 @@ export default function () {
     };
     const latestResult = getProducts(latestParams, responseTimeLatest);
     
-    if (!latestResult.success) {
-        console.error('Latest sort failed:', latestResult.response.status);
-    }
-    
-    sleep(sleepTime); // 요청 간 대기 (스트레스 모드: 0.1초, 일반 모드: 1초)
+    sleep(sleepTime);
     
     // 시나리오 2: 가격 오름차순 정렬 조회 (PRICE_ASC)
     const priceAscParams = {
@@ -196,10 +226,6 @@ export default function () {
         size: 20,
     };
     const priceAscResult = getProducts(priceAscParams, responseTimePriceAsc);
-    
-    if (!priceAscResult.success) {
-        console.error('Price ASC sort failed:', priceAscResult.response.status);
-    }
     
     sleep(sleepTime);
     
@@ -211,10 +237,6 @@ export default function () {
     };
     const likesDescResult = getProducts(likesDescParams, responseTimeLikesDesc);
     
-    if (!likesDescResult.success) {
-        console.error('Likes DESC sort failed:', likesDescResult.response.status);
-    }
-    
     sleep(sleepTime);
     
     // 시나리오 4: 브랜드 필터링 조회
@@ -225,14 +247,11 @@ export default function () {
         size: 20,
     };
     const brandFilterResult = getProducts(brandFilterParams, responseTimeBrandFilter);
-    
-    if (!brandFilterResult.success) {
-        console.error('Brand filter failed:', brandFilterResult.response.status);
-    }
+
     
     sleep(sleepTime);
     
-    // 시나리오 5: 페이지네이션 테스트 (다양한 페이지 크기)
+    // 시나리오 5: 페이지네이션 테스트
     const pageSizes = [10, 20, 50];
     const randomPageSize = pageSizes[Math.floor(Math.random() * pageSizes.length)];
     
@@ -242,10 +261,7 @@ export default function () {
         size: randomPageSize,
     };
     const paginationResult = getProducts(paginationParams, responseTimePagination);
-    
-    if (!paginationResult.success) {
-        console.error('Pagination failed:', paginationResult.response.status);
-    }
+
     
     sleep(sleepTime);
     
@@ -265,21 +281,18 @@ export default function () {
             check(brandValidationResult.response, {
                 'brand filter validation': () => {
                     if (body.data && body.data.products && body.data.products.length > 0) {
-                        // 모든 상품이 같은 브랜드인지 확인
                         return body.data.products.every(product => product.brandId === brandId);
                     }
-                    return true; // 빈 결과도 유효
+                    return true;
                 },
             });
         } catch (e) {
-            // JSON 파싱 실패는 무시
         }
     }
     
     sleep(sleepTime);
     
-    // 시나리오 7: 정렬 순서 검증 테스트
-    // 최신순 정렬 검증
+    // 시나리오 7: 최신순 정렬 검증
     const latestValidationParams = { sort: 'latest', page: 0, size: 10 };
     const latestValidationResult = getProducts(latestValidationParams, responseTimeLatest);
     
@@ -294,13 +307,12 @@ export default function () {
                 });
             }
         } catch (e) {
-            // JSON 파싱 실패는 무시
         }
     }
     
     sleep(sleepTime);
     
-    // 가격 오름차순 정렬 검증
+    // 시나리오 8: 가격 오름차순 정렬 검증
     const priceAscValidationParams = { sort: 'price_asc', page: 0, size: 10 };
     const priceAscValidationResult = getProducts(priceAscValidationParams, responseTimePriceAsc);
     
@@ -315,13 +327,12 @@ export default function () {
                 });
             }
         } catch (e) {
-            // JSON 파싱 실패는 무시
         }
     }
     
     sleep(sleepTime);
     
-    // 좋아요 내림차순 정렬 검증
+    // 시나리오 9: 좋아요 내림차순 정렬 검증
     const likesDescValidationParams = { sort: 'likes_desc', page: 0, size: 10 };
     const likesDescValidationResult = getProducts(likesDescValidationParams, responseTimeLikesDesc);
     
@@ -336,9 +347,14 @@ export default function () {
                 });
             }
         } catch (e) {
-            // JSON 파싱 실패는 무시
         }
     }
+    
+    sleep(sleepTime);
+    
+    // 시나리오 10: 유저 좋아요 등록
+    const productId = iteration + 1;
+    recordLike(productId, loginId);
     
     sleep(sleepTime);
 }
@@ -348,7 +364,6 @@ export default function () {
 // ============================================================================
 
 export function setup() {
-    // 테스트 시작 전 초기 설정
     console.log(`Starting k6 test against: ${BASE_URL}`);
     console.log(`API endpoint: ${API_BASE}`);
     console.log(`Test mode: ${TEST_MODE}`);
@@ -362,6 +377,35 @@ export function setup() {
         console.log('📊 LOAD TEST MODE: Normal performance testing');
         console.log('   - Max VUs: 100');
         console.log('   - Standard thresholds');
+    }
+    
+    // 테스트용 사용자 생성 (user1, user2)
+    const USER_API_BASE = `${BASE_URL}/api/v1/users`;
+    
+    for (let i = 1; i <= 2; i++) {
+        const loginId = `user${i}`;
+        const email = `user${i}@test.com`;
+        const birthDate = '2000-01-01';
+        const gender = 'M';
+        
+        const signupRequest = {
+            loginId: loginId,
+            email: email,
+            birthDate: birthDate,
+            gender: gender
+        };
+        
+        const response = http.post(USER_API_BASE, JSON.stringify(signupRequest), {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        if (response.status === 200 || response.status === 409) {
+            console.log(`User ${loginId} ready (status: ${response.status})`);
+        } else {
+            console.warn(`Failed to create user ${loginId}: ${response.status}`);
+        }
     }
     
     return {
