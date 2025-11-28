@@ -66,7 +66,7 @@ class ProductFacadeIntegrationTest {
             Map<Long, String> brandNamesMap = new HashMap<>();
             brandNamesMap.put(1L, "브랜드1");
 
-            doReturn(products).when(productService).findProductsByLatestWithBrandName(brandId, page, size);
+            doReturn(products).when(productService).findProductsByLatest(brandId, page, size);
             doReturn(brandNamesMap).when(brandService).findBrandNamesByIds(any());
 
             // act
@@ -84,7 +84,7 @@ class ProductFacadeIntegrationTest {
             );
 
             // verify
-            verify(productService, times(1)).findProductsByLatestWithBrandName(brandId, page, size);
+            verify(productService, times(1)).findProductsByLatest(brandId, page, size);
             verify(brandService, times(1)).findBrandNamesByIds(any());
         }
 
@@ -107,7 +107,7 @@ class ProductFacadeIntegrationTest {
             brandNamesMap.put(1L, "브랜드1");
             brandNamesMap.put(2L, "브랜드2");
 
-            doReturn(products).when(productService).findProductsByPriceAscWithBrandName(brandId, page, size);
+            doReturn(products).when(productService).findProductsByPriceAsc(brandId, page, size);
             doReturn(brandNamesMap).when(brandService).findBrandNamesByIds(any());
 
             // act
@@ -123,7 +123,7 @@ class ProductFacadeIntegrationTest {
             );
 
             // verify
-            verify(productService, times(1)).findProductsByPriceAscWithBrandName(brandId, page, size);
+            verify(productService, times(1)).findProductsByPriceAsc(brandId, page, size);
             verify(brandService, times(1)).findBrandNamesByIds(any());
         }
 
@@ -145,7 +145,7 @@ class ProductFacadeIntegrationTest {
             Map<Long, String> brandNamesMap = new HashMap<>();
             brandNamesMap.put(1L, "브랜드1");
 
-            doReturn(products).when(productService).findProductsByLikesDescWithBrandName(brandId, page, size);
+            doReturn(products).when(productService).findProductsByLikesDesc(brandId, page, size);
             doReturn(brandNamesMap).when(brandService).findBrandNamesByIds(any());
 
             // act
@@ -161,7 +161,7 @@ class ProductFacadeIntegrationTest {
             );
 
             // verify
-            verify(productService, times(1)).findProductsByLikesDescWithBrandName(brandId, page, size);
+            verify(productService, times(1)).findProductsByLikesDesc(brandId, page, size);
             verify(brandService, times(1)).findBrandNamesByIds(any());
         }
 
@@ -185,7 +185,7 @@ class ProductFacadeIntegrationTest {
             brandNamesMap.put(1L, "브랜드1");
             brandNamesMap.put(2L, "브랜드2");
 
-            doReturn(products).when(productService).findProductsByLatestWithBrandName(brandId, page, size);
+            doReturn(products).when(productService).findProductsByLatest(brandId, page, size);
             doReturn(brandNamesMap).when(brandService).findBrandNamesByIds(any());
 
             // act
@@ -200,7 +200,7 @@ class ProductFacadeIntegrationTest {
             );
 
             // verify
-            verify(productService, times(1)).findProductsByLatestWithBrandName(brandId, page, size);
+            verify(productService, times(1)).findProductsByLatest(brandId, page, size);
             verify(brandService, times(1)).findBrandNamesByIds(any());
         }
 
@@ -221,7 +221,7 @@ class ProductFacadeIntegrationTest {
             Map<Long, String> brandNamesMap = new HashMap<>();
             brandNamesMap.put(1L, "브랜드1");
 
-            doReturn(products).when(productService).findProductsByLatestWithBrandName(brandId, page, size);
+            doReturn(products).when(productService).findProductsByLatest(brandId, page, size);
             doReturn(brandNamesMap).when(brandService).findBrandNamesByIds(any());
 
             // act
@@ -233,7 +233,7 @@ class ProductFacadeIntegrationTest {
             assertThat(result.get(0).brandName()).isEqualTo("브랜드1");
 
             // verify
-            verify(productService, times(1)).findProductsByLatestWithBrandName(brandId, page, size);
+            verify(productService, times(1)).findProductsByLatest(brandId, page, size);
             verify(brandService, times(1)).findBrandNamesByIds(any());
         }
 
@@ -250,7 +250,7 @@ class ProductFacadeIntegrationTest {
 
             List<Product> products = List.of();
 
-            doReturn(products).when(productService).findProductsByLatestWithBrandName(brandId, page, size);
+            doReturn(products).when(productService).findProductsByLatest(brandId, page, size);
             doReturn(new HashMap<>()).when(brandService).findBrandNamesByIds(any());
 
             // act
@@ -260,7 +260,7 @@ class ProductFacadeIntegrationTest {
             assertThat(result).isEmpty();
 
             // verify
-            verify(productService, times(1)).findProductsByLatestWithBrandName(brandId, page, size);
+            verify(productService, times(1)).findProductsByLatest(brandId, page, size);
             verify(brandService, times(1)).findBrandNamesByIds(any());
         }
     }
