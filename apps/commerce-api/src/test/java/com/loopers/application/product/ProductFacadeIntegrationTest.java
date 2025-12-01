@@ -21,10 +21,12 @@ import com.loopers.domain.product.ProductService;
 import com.loopers.domain.product.Stock;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import com.loopers.utils.RedisCleanUp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -38,11 +40,19 @@ class ProductFacadeIntegrationTest {
     @Autowired
     private ProductFacade productFacade;
 
+    @Autowired
+    private RedisCleanUp redisCleanUp;
+
     @MockitoSpyBean
     private ProductService productService;
 
     @MockitoSpyBean
     private BrandService brandService;
+
+    @BeforeEach
+    void setUp() {
+        redisCleanUp.truncateAll();
+    }
 
     @DisplayName("상품 목록을 조회할 때,")
     @Nested

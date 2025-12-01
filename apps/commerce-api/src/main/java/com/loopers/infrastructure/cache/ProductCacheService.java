@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.product.ProductInfo;
 import com.loopers.application.product.ProductSort;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.scheduling.annotation.Async;
@@ -31,6 +33,10 @@ public class ProductCacheService {
     private final RedisTemplate<String, Object> redisTemplateMaster;
     private final ObjectMapper objectMapper;
     private final DistributedLock distributedLock;
+
+    @Lazy
+    @Autowired
+    private ProductCacheService self;
 
     public ProductCacheService(
             @Qualifier("redisTemplateObject") RedisTemplate<String, Object> redisTemplate,
@@ -79,7 +85,7 @@ public class ProductCacheService {
             Long ttl = redisTemplate.getExpire(cacheKey, TimeUnit.SECONDS);
             if (ttl != null && ttl < REFRESH_THRESHOLD_SECONDS) {
                 log.info("키 {}의 TTL이 임계값 이하입니다. 비동기 새로고침을 실행합니다.", cacheKey);
-                refreshProductCache(productId, cacheKey, dbSupplier, PRODUCT_DETAIL_TTL);
+                self.refreshProductCache(productId, cacheKey, dbSupplier, PRODUCT_DETAIL_TTL);
             }
             return productInfo;
         }
@@ -108,7 +114,7 @@ public class ProductCacheService {
             Long ttl = redisTemplate.getExpire(cacheKey, TimeUnit.SECONDS);
             if (ttl != null && ttl < REFRESH_THRESHOLD_SECONDS) {
                 log.info("키 {}의 TTL이 임계값 이하입니다. 비동기 새로고침을 실행합니다.", cacheKey);
-                refreshProductListCache(cacheKey, dbSupplier, PRODUCT_LIST_TTL);
+                self.refreshProductListCache(cacheKey, dbSupplier, PRODUCT_LIST_TTL);
             }
             return productList;
         }
