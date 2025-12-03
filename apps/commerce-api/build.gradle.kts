@@ -33,5 +33,4 @@ dependencies {
 
     // feign
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
-    implementation("io.github.resilience4j:resilience4j-spring-cloud2")
 }
