@@ -3,7 +3,10 @@ package com.loopers.domain.payment;
 import com.loopers.domain.BaseEntity;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -20,6 +23,12 @@ public class Payment extends BaseEntity {
     @Column(nullable = false, unique = true)
     private Long orderId;
 
+    @Column(nullable = false, unique = true)
+    private String orderKey;
+
+    @Column(unique = true)
+    private String transactionKey;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus status;
@@ -27,89 +36,50 @@ public class Payment extends BaseEntity {
     @Column(nullable = false)
     private Integer amount;
 
-    @Column(nullable = false)
-    private String cardType;
-
-    @Column(nullable = false)
-    private String cardNumber;
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "cardType", column = @Column(name = "card_type")),
+            @AttributeOverride(name = "cardNumber", column = @Column(name = "card_number"))
+    })
+    private Card card;
 
     @Column
     private LocalDateTime paidAt;
 
     @Builder
-    private Payment(Long orderId, PaymentStatus status, Integer amount, String cardType,
-                    String cardNumber, LocalDateTime paidAt) {
-        validateCreatePayment(orderId, status, amount, cardType, cardNumber);
+    private Payment(Long orderId, String orderKey, String transactionKey, PaymentStatus status, Integer amount,
+                    Card card, LocalDateTime paidAt) {
+        validateCreatePayment(orderId, amount, orderKey);
         this.orderId = orderId;
+        this.orderKey = orderKey;
+        this.transactionKey = transactionKey;
         this.status = status;
         this.amount = amount;
-        this.cardType = cardType;
-        this.cardNumber = cardNumber;
+        this.card = card;
         this.paidAt = paidAt;
     }
 
     public Payment() {
     }
 
-    public static Payment createPayment(Long orderId, Integer amount, String cardType,
-                                       String cardNumber) {
+    public static Payment createPayment(Long orderId, Integer amount, String orderKey) {
         return Payment.builder()
                 .orderId(orderId)
+                .orderKey(orderKey)
                 .status(PaymentStatus.PENDING)
                 .amount(amount)
-                .cardType(cardType)
-                .cardNumber(cardNumber)
-                .paidAt(null)
                 .build();
     }
 
-    public void complete() {
-        if (this.status != PaymentStatus.PENDING) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 대기 상태인 경우에만 결제 완료 처리할 수 있습니다.");
-        }
-        this.status = PaymentStatus.COMPLETED;
-        this.paidAt = LocalDateTime.now();
-    }
-
-    public void fail() {
-        if (this.status != PaymentStatus.PENDING) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 대기 상태인 경우에만 결제 실패 처리할 수 있습니다.");
-        }
-        this.status = PaymentStatus.FAILED;
-    }
-
-    public void cancel() {
-        if (this.status != PaymentStatus.COMPLETED) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 완료 상태인 경우에만 결제 취소할 수 있습니다.");
-        }
-        this.status = PaymentStatus.CANCELED;
-    }
-
-    public void refund() {
-        if (this.status != PaymentStatus.COMPLETED) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 완료 상태인 경우에만 환불할 수 있습니다.");
-        }
-        this.status = PaymentStatus.REFUNDED;
-    }
-
-    private static void validateCreatePayment(Long orderId, PaymentStatus status, Integer amount,
-                                              String cardType, String cardNumber) {
+    private static void validateCreatePayment(Long orderId, Integer amount, String orderKey) {
         validateOrderId(orderId);
-        validateStatus(status);
         validateAmount(amount);
-        validateCardType(cardType);
-        validateCardNumber(cardNumber);
+        validateOrderKey(orderKey);
     }
 
     private static void validateOrderId(Long orderId) {
         if (orderId == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID는 필수입니다.");
-        }
-    }
-
-    private static void validateStatus(PaymentStatus status) {
-        if (status == null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 상태는 필수입니다.");
         }
     }
 
@@ -122,15 +92,13 @@ public class Payment extends BaseEntity {
         }
     }
 
-    private static void validateCardType(String cardType) {
-        if (cardType == null || cardType.isBlank()) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "카드 타입은 필수입니다.");
+    private static void validateOrderKey(String orderKey) {
+        if (orderKey == null || orderKey.isBlank()) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "주문 키는 필수입니다.");
         }
-    }
 
-    private static void validateCardNumber(String cardNumber) {
-        if (cardNumber == null || cardNumber.isBlank()) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "카드 번호는 필수입니다.");
+        if (orderKey.length() < 6) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "주문 키는 최소 6자리 이상이어야 합니다.");
         }
     }
 }
