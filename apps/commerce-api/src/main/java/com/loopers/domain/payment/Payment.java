@@ -16,7 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Entity
-@Table(name = "payments")
+@Table(name = "payment")
 @Getter
 public class Payment extends BaseEntity {
 
@@ -38,8 +38,8 @@ public class Payment extends BaseEntity {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "cardType", column = @Column(name = "card_type")),
-            @AttributeOverride(name = "cardNumber", column = @Column(name = "card_number"))
+            @AttributeOverride(name = "cardType", column = @Column(name = "card_type", nullable = true)),
+            @AttributeOverride(name = "cardNumber", column = @Column(name = "card_number", nullable = true))
     })
     private Card card;
 
@@ -100,6 +100,30 @@ public class Payment extends BaseEntity {
         if (orderKey.length() < 6) {
             throw new CoreException(ErrorType.BAD_REQUEST, "주문 키는 최소 6자리 이상이어야 합니다.");
         }
+    }
+
+    public void updateStatus(PaymentStatus status) {
+        if (status == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "결제 상태는 필수입니다.");
+        }
+        this.status = status;
+        if (status == PaymentStatus.COMPLETED) {
+            this.paidAt = LocalDateTime.now();
+        }
+    }
+
+    public void updateTransactionKey(String transactionKey) {
+        if (transactionKey == null || transactionKey.isBlank()) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "거래 키는 필수입니다.");
+        }
+        this.transactionKey = transactionKey;
+    }
+
+    public void updateCard(String cardType, String cardNumber) {
+        if (cardType == null || cardNumber == null) {
+            throw new CoreException(ErrorType.BAD_REQUEST, "카드 타입과 카드 번호는 필수입니다.");
+        }
+        this.card = new Card(cardType, cardNumber);
     }
 }
 

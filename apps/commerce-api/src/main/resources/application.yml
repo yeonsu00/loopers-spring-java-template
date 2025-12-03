@@ -76,10 +76,6 @@ resilience4j:
           - java.net.NoRouteToHostException
           - java.io.IOException
 
-          # Spring Web Client 관련
-          - org.springframework.web.client.ResourceAccessException
-          - org.springframework.web.client.HttpServerErrorException
-
           # 타임아웃 관련
           - java.util.concurrent.TimeoutException
 

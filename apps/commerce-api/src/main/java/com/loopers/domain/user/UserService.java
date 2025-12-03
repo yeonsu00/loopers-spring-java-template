@@ -33,4 +33,10 @@ public class UserService {
         return userRepository.findByLoginId(loginId);
     }
 
+    @Transactional(readOnly = true)
+    public User getUserByLoginId(String loginId) {
+        return userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+    }
+
 }
