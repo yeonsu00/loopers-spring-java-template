@@ -2,9 +2,12 @@ package com.loopers.infrastructure.order;
 
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderRepository;
+import com.loopers.domain.order.OrderStatus;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -21,6 +24,16 @@ public class OrderRepositoryImpl implements OrderRepository {
     @Override
     public Optional<Order> findOrderByIdAndUserId(Long orderId, Long userId) {
         return orderJpaRepository.findByIdAndUserId(orderId, userId);
+    }
+
+    @Override
+    public Optional<Order> findOrderById(Long orderId) {
+        return orderJpaRepository.findById(orderId);
+    }
+
+    @Override
+    public Optional<Order> findByOrderKey(String orderKey) {
+        return orderJpaRepository.findByOrderKey(orderKey);
     }
 
     @Override

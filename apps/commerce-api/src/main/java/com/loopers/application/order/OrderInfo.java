@@ -26,20 +26,6 @@ public record OrderInfo(
         );
     }
 
-    public static OrderInfo from(Order order, List<OrderItem> orderItems, Delivery delivery) {
-        List<OrderItemInfo> itemInfos = orderItems.stream()
-                .map(OrderItemInfo::from)
-                .toList();
-
-        return new OrderInfo(
-                order.getId(),
-                order.getOrderStatus().getDescription(),
-                itemInfos,
-                DeliveryInfo.from(delivery),
-                null  // orderKey는 조회 시 반환하지 않음
-        );
-    }
-
     public record OrderItemInfo(
             Long productId,
             String productName,

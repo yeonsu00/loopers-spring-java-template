@@ -48,7 +48,8 @@ public class OrderFacade {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
         Delivery delivery = OrderCommand.DeliveryCommand.toDelivery(createOrderCommand.delivery());
-        Order order = orderService.createOrder(user.getId(), delivery);
+        String orderKey = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        Order order = orderService.createOrder(user.getId(), orderKey, delivery);
 
         int originalTotalPrice = 0;
         for (OrderCommand.OrderItemCommand orderItemCommand : createOrderCommand.orderItems()) {
@@ -75,7 +76,6 @@ public class OrderFacade {
 
         orderService.saveOrder(order);
 
-        String orderKey = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         paymentService.createPayment(order.getId(), finalAmount, orderKey);
 
         return OrderInfo.from(order, order.getOrderItems(), delivery, orderKey);
@@ -94,7 +94,7 @@ public class OrderFacade {
         List<Order> orders = orderService.findOrdersByUserId(user.getId());
 
         return orders.stream()
-                .map(order -> OrderInfo.from(order, order.getOrderItems(), order.getDelivery()))
+                .map(order -> OrderInfo.from(order, order.getOrderItems(), order.getDelivery(), null))
                 .toList();
     }
 
@@ -106,6 +106,6 @@ public class OrderFacade {
         Order order = orderService.findOrderByIdAndUserId(orderId, user.getId())
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "주문을 찾을 수 없습니다."));
 
-        return OrderInfo.from(order, order.getOrderItems(), order.getDelivery());
+        return OrderInfo.from(order, order.getOrderItems(), order.getDelivery(), null);
     }
 }
