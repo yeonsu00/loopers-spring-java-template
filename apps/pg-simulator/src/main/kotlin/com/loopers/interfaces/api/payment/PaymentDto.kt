@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.payment
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.loopers.application.payment.OrderInfo
 import com.loopers.application.payment.PaymentCommand
 import com.loopers.application.payment.TransactionInfo
@@ -10,10 +11,15 @@ import com.loopers.support.error.ErrorType
 
 object PaymentDto {
     data class PaymentRequest(
+        @JsonProperty("orderId")
         val orderId: String,
+        @JsonProperty("cardType")
         val cardType: CardTypeDto,
+        @JsonProperty("cardNo")
         val cardNo: String,
+        @JsonProperty("amount")
         val amount: Long,
+        @JsonProperty("callbackUrl")
         val callbackUrl: String,
     ) {
         companion object {
