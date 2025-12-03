@@ -9,8 +9,22 @@ public record OrderInfo(
         Long orderId,
         String orderStatus,
         List<OrderItemInfo> orderItems,
-        DeliveryInfo delivery
+        DeliveryInfo delivery,
+        String orderKey
 ) {
+    public static OrderInfo from(Order order, List<OrderItem> orderItems, Delivery delivery, String orderKey) {
+        List<OrderItemInfo> itemInfos = orderItems.stream()
+                .map(OrderItemInfo::from)
+                .toList();
+
+        return new OrderInfo(
+                order.getId(),
+                order.getOrderStatus().getDescription(),
+                itemInfos,
+                DeliveryInfo.from(delivery),
+                orderKey
+        );
+    }
 
     public static OrderInfo from(Order order, List<OrderItem> orderItems, Delivery delivery) {
         List<OrderItemInfo> itemInfos = orderItems.stream()
@@ -21,7 +35,8 @@ public record OrderInfo(
                 order.getId(),
                 order.getOrderStatus().getDescription(),
                 itemInfos,
-                DeliveryInfo.from(delivery)
+                DeliveryInfo.from(delivery),
+                null  // orderKey는 조회 시 반환하지 않음
         );
     }
 
