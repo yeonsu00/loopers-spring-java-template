@@ -59,7 +59,7 @@ public class PgPaymentClient implements PaymentClient {
 
     public CompletableFuture<PaymentResponse> requestPaymentRetryFallback(
             PaymentRequest request, String userId, Throwable t) {
-        log.warn("PG 결제 요청 Retry Fallback 호출: orderKey={}, error={}", request.orderId(), t.getMessage());
+        log.warn("PG 결제 요청 Retry Fallback 호출: orderKey={}, userId={}, error={}", request.orderId(), userId, t.getMessage());
         
         PaymentResponse response = new PaymentResponse(
                 null,
@@ -71,7 +71,7 @@ public class PgPaymentClient implements PaymentClient {
 
     public CompletableFuture<PaymentResponse> requestPaymentFallback(
             PaymentRequest request, String userId, Exception e) {
-        log.error("PG 결제 요청 CircuitBreaker Fallback 호출: orderKey={}, error={}", request.orderId(), e.getMessage());
+        log.error("PG 결제 요청 CircuitBreaker Fallback 호출: orderKey={}, userId={}, error={}", request.orderId(), userId, e.getMessage());
         throw new CoreException(ErrorType.INTERNAL_ERROR, "PG 시스템이 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.");
     }
 }

@@ -123,7 +123,7 @@ public class Payment extends BaseEntity {
         if (cardType == null || cardNumber == null) {
             throw new CoreException(ErrorType.BAD_REQUEST, "카드 타입과 카드 번호는 필수입니다.");
         }
-        this.card = new Card(cardType, cardNumber);
+        this.card = Card.createCard(cardType, cardNumber);
     }
 }
 

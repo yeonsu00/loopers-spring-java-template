@@ -91,12 +91,16 @@ public class PaymentService {
         Payment payment = paymentRepository.findByTransactionKey(transactionKey)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
         payment.updateStatus(status);
+        payment.updateTransactionKey(transactionKey);
         paymentRepository.savePayment(payment);
     }
 
     @Transactional
-    public Payment savePayment(Payment payment) {
-        return paymentRepository.savePayment(payment);
+    public void updatePaymentStatusByOrderKey(String orderKey, PaymentStatus status) {
+        Payment payment = paymentRepository.findByOrderKey(orderKey)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
+        payment.updateStatus(status);
+        paymentRepository.savePayment(payment);
     }
 }
 

@@ -39,16 +39,23 @@ public class PaymentFacade {
         paymentService.validatePaymentStatus(savedPayment);
 
         User user = userService.getUserByLoginId(command.loginId());
+        Order order = orderService.getOrderById(savedPayment.getOrderId());
         orderService.validateIsUserOrder(command.orderKey(), user.getId());
 
-        Payment updatedPayment = paymentService.requestPaymentToPg(
-                savedPayment,
-                command.cardType(),
-                command.cardNo(),
-                command.loginId()
-        );
+        try {
+            Payment updatedPayment = paymentService.requestPaymentToPg(
+                    savedPayment,
+                    command.cardType(),
+                    command.cardNo(),
+                    command.loginId()
+            );
 
-        return PaymentInfo.from(updatedPayment);
+            return PaymentInfo.from(updatedPayment);
+        } catch (Exception e) {
+            log.error("PG 결제 요청 실패: orderKey={}, error={}", command.orderKey(), e.getMessage(), e);
+            handleFailure(savedPayment, order, "PG 결제 요청 실패: " + e.getMessage());
+            throw new CoreException(ErrorType.INTERNAL_ERROR, "결제 요청에 실패했습니다.");
+        }
     }
 
     @Transactional
@@ -75,7 +82,12 @@ public class PaymentFacade {
 
     private void handleFailure(Payment payment, Order order, String reason) {
         orderService.cancelOrder(order);
-        paymentService.updatePaymentStatus(payment.getTransactionKey(), PaymentStatus.FAILED);
+        
+        if (payment.getTransactionKey() != null && !payment.getTransactionKey().isBlank()) {
+            paymentService.updatePaymentStatus(payment.getTransactionKey(), PaymentStatus.FAILED);
+        } else {
+            paymentService.updatePaymentStatusByOrderKey(payment.getOrderKey(), PaymentStatus.FAILED);
+        }
 
         for (OrderItem orderItem : order.getOrderItems()) {
             Product product = productService.findProductById(orderItem.getProductId())
