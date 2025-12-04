@@ -27,7 +27,7 @@ public interface PaymentV1ApiSpec {
     )
     ApiResponse<Object> handlePaymentCallback(
             @Schema(name = "결제 콜백 정보", description = "PG 시스템으로부터 받은 결제 결과 정보")
-            PaymentCallbackDto.PaymentCallbackRequest request
+            PaymentV1Dto.PaymentCallbackRequest request
     );
 
 }

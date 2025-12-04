@@ -1,5 +1,6 @@
 package com.loopers.interfaces.api.payment;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.loopers.application.payment.PaymentCommand;
 import com.loopers.application.payment.PaymentInfo;
 import jakarta.validation.constraints.NotBlank;
@@ -41,6 +42,17 @@ public class PaymentV1Dto {
                     paymentInfo.amount()
             );
         }
+    }
+
+    public record PaymentCallbackRequest(
+            @JsonProperty("transactionKey") String transactionKey,
+            @JsonProperty("orderId") String orderId,
+            @JsonProperty("cardType") String cardType,
+            @JsonProperty("cardNo") String cardNo,
+            @JsonProperty("amount") Long amount,
+            @JsonProperty("status") String status,
+            @JsonProperty("reason") String reason
+    ) {
     }
 }
 

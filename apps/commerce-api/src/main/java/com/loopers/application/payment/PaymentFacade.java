@@ -13,7 +13,7 @@ import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
-import com.loopers.interfaces.api.payment.PaymentCallbackDto.PaymentCallbackRequest;
+import com.loopers.interfaces.api.payment.PaymentV1Dto.PaymentCallbackRequest;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;

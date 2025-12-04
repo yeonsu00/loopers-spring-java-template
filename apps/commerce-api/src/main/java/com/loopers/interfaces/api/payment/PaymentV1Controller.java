@@ -37,7 +37,7 @@ public class PaymentV1Controller implements PaymentV1ApiSpec {
     @PostMapping("/callback")
     @Override
     public ApiResponse<Object> handlePaymentCallback(
-            @RequestBody PaymentCallbackDto.PaymentCallbackRequest request
+            @RequestBody PaymentV1Dto.PaymentCallbackRequest request
     ) {
         log.info("결제 콜백 수신: transactionKey={}, orderKey={}, status={}",
                 request.transactionKey(), request.orderId(), request.status());
