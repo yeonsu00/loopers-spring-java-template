@@ -19,8 +19,15 @@ public class ProductService {
         return productRepository.findProductById(productId);
     }
 
+    @Transactional
     public void reduceStock(Product product, Integer quantity) {
         product.reduceStock(quantity);
+        productRepository.saveProduct(product);
+    }
+
+    @Transactional
+    public void restoreStock(Product product, Integer quantity) {
+        product.restoreStock(quantity);
         productRepository.saveProduct(product);
     }
 

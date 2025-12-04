@@ -55,7 +55,8 @@ public class OrderV1Dto {
             Long orderId,
             String orderStatus,
             List<OrderItemResponse> orderItems,
-            DeliveryResponse delivery
+            DeliveryResponse delivery,
+            String orderKey
     ) {
         public static OrderResponse from(OrderInfo orderInfo) {
             return new OrderResponse(
@@ -64,7 +65,8 @@ public class OrderV1Dto {
                     orderInfo.orderItems().stream()
                             .map(OrderItemResponse::from)
                             .toList(),
-                    DeliveryResponse.from(orderInfo.delivery())
+                    DeliveryResponse.from(orderInfo.delivery()),
+                    orderInfo.orderKey()
             );
         }
     }
