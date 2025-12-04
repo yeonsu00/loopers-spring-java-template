@@ -41,15 +41,8 @@ public class PaymentV1Controller implements PaymentV1ApiSpec {
     ) {
         log.info("결제 콜백 수신: transactionKey={}, orderKey={}, status={}",
                 request.transactionKey(), request.orderId(), request.status());
-
-        try {
-            paymentFacade.handlePaymentCallback(request);
-            return ApiResponse.success();
-        } catch (Exception e) {
-            log.error("결제 콜백 처리 중 오류 발생: transactionKey={}, error={}",
-                    request.transactionKey(), e.getMessage(), e);
-            return ApiResponse.success();
-        }
+        paymentFacade.handlePaymentCallback(request);
+        return ApiResponse.success();
     }
 }
 
