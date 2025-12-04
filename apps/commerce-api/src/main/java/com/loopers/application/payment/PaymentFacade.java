@@ -39,7 +39,7 @@ public class PaymentFacade {
         paymentService.validatePaymentStatus(savedPayment);
 
         User user = userService.getUserByLoginId(command.loginId());
-        Order order = orderService.getOrderById(savedPayment.getOrderId());
+        Order order = orderService.getOrderByOrderKey(command.orderKey());
         orderService.validateIsUserOrder(command.orderKey(), user.getId());
 
         try {
@@ -61,7 +61,7 @@ public class PaymentFacade {
     @Transactional
     public void handlePaymentCallback(PaymentCallbackRequest request) {
         Payment payment = paymentService.getPendingPaymentByTransactionKey(request.transactionKey());
-        Order order = orderService.getOrderById(payment.getOrderId());
+        Order order = orderService.getOrderByOrderKey(payment.getOrderKey());
 
         String status = request.status();
         switch (status) {
@@ -103,8 +103,8 @@ public class PaymentFacade {
             couponService.restoreCoupon(coupon);
         }
 
-        log.warn("결제 실패 처리: orderId={}, transactionKey={}, reason={}",
-                payment.getOrderId(), payment.getTransactionKey(), reason);
+        log.warn("결제 실패 처리: orderKey={}, transactionKey={}, reason={}",
+                payment.getOrderKey(), payment.getTransactionKey(), reason);
     }
 }
 

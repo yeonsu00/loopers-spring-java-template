@@ -21,9 +21,6 @@ import lombok.Getter;
 public class Payment extends BaseEntity {
 
     @Column(nullable = false, unique = true)
-    private Long orderId;
-
-    @Column(nullable = false, unique = true)
     private String orderKey;
 
     @Column(unique = true)
@@ -47,10 +44,9 @@ public class Payment extends BaseEntity {
     private LocalDateTime paidAt;
 
     @Builder
-    private Payment(Long orderId, String orderKey, String transactionKey, PaymentStatus status, Integer amount,
+    private Payment(String orderKey, String transactionKey, PaymentStatus status, Integer amount,
                     Card card, LocalDateTime paidAt) {
-        validateCreatePayment(orderId, amount, orderKey);
-        this.orderId = orderId;
+        validateCreatePayment(amount, orderKey);
         this.orderKey = orderKey;
         this.transactionKey = transactionKey;
         this.status = status;
@@ -62,25 +58,17 @@ public class Payment extends BaseEntity {
     public Payment() {
     }
 
-    public static Payment createPayment(Long orderId, Integer amount, String orderKey) {
+    public static Payment createPayment(Integer amount, String orderKey) {
         return Payment.builder()
-                .orderId(orderId)
                 .orderKey(orderKey)
                 .status(PaymentStatus.PENDING)
                 .amount(amount)
                 .build();
     }
 
-    private static void validateCreatePayment(Long orderId, Integer amount, String orderKey) {
-        validateOrderId(orderId);
+    private static void validateCreatePayment(Integer amount, String orderKey) {
         validateAmount(amount);
         validateOrderKey(orderKey);
-    }
-
-    private static void validateOrderId(Long orderId) {
-        if (orderId == null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "주문 ID는 필수입니다.");
-        }
     }
 
     private static void validateAmount(Integer amount) {

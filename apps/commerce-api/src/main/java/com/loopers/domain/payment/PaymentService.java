@@ -22,8 +22,8 @@ public class PaymentService {
     @Value("${server.port:8080}")
     private String serverPort;
 
-    public void createPayment(Long orderId, Integer amount, String orderKey) {
-        Payment payment = Payment.createPayment(orderId, amount, orderKey);
+    public void createPayment(Integer amount, String orderKey) {
+        Payment payment = Payment.createPayment(amount, orderKey);
         paymentRepository.savePayment(payment);
     }
 

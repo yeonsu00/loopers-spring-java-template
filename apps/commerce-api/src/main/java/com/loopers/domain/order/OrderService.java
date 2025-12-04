@@ -56,8 +56,8 @@ public class OrderService {
         return orderRepository.findOrderByIdAndUserId(orderId, userId);
     }
 
-    public Order getOrderById(Long orderId) {
-        return orderRepository.findOrderById(orderId)
+    public Order getOrderByOrderKey(String orderKey) {
+        return orderRepository.findByOrderKey(orderKey)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "주문을 찾을 수 없습니다."));
     }
 

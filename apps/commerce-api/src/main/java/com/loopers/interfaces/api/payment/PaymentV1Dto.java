@@ -28,7 +28,7 @@ public class PaymentV1Dto {
 
     public record PaymentResponse(
             Long paymentId,
-            Long orderId,
+            String orderKey,
             String transactionKey,
             String status,
             Integer amount
@@ -36,7 +36,7 @@ public class PaymentV1Dto {
         public static PaymentResponse from(PaymentInfo paymentInfo) {
             return new PaymentResponse(
                     paymentInfo.paymentId(),
-                    paymentInfo.orderId(),
+                    paymentInfo.orderKey(),
                     paymentInfo.transactionKey(),
                     paymentInfo.status(),
                     paymentInfo.amount()

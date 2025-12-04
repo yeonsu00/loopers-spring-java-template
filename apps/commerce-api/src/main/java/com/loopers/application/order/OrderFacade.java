@@ -75,8 +75,7 @@ public class OrderFacade {
         pointService.deductPoint(user.getId(), finalAmount);
 
         orderService.saveOrder(order);
-
-        paymentService.createPayment(order.getId(), finalAmount, orderKey);
+        paymentService.createPayment(finalAmount, orderKey);
 
         return OrderInfo.from(order, order.getOrderItems(), delivery, orderKey);
     }
