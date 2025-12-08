@@ -11,6 +11,9 @@ import static org.mockito.Mockito.verify;
 
 import com.loopers.domain.payment.PaymentClient.PaymentRequest;
 import com.loopers.domain.payment.PaymentClient.PaymentResponse;
+import com.loopers.infrastructure.gateway.PgPaymentClient;
+import com.loopers.infrastructure.gateway.PgPaymentDto;
+import com.loopers.infrastructure.gateway.PgPaymentFeignClient;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import java.util.concurrent.CompletableFuture;

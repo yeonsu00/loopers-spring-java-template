@@ -1,4 +1,4 @@
-package com.loopers.infrastructure.payment;
+package com.loopers.infrastructure.gateway;
 
 import com.loopers.domain.payment.PaymentClient;
 import com.loopers.support.error.CoreException;
