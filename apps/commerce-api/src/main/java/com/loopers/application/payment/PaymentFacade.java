@@ -13,7 +13,7 @@ import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
-import com.loopers.interfaces.api.payment.PaymentV1Dto.PaymentCallbackRequest;
+import com.loopers.interfaces.api.payment.PaymentV1Dto;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +59,7 @@ public class PaymentFacade {
     }
 
     @Transactional
-    public void handlePaymentCallback(PaymentCallbackRequest request) {
+    public void handlePaymentCallback(PaymentV1Dto.PaymentCallbackRequest request) {
         Payment payment = paymentService.getPendingPaymentByTransactionKey(request.transactionKey());
         Order order = orderService.getOrderByOrderKey(payment.getOrderKey());
 
