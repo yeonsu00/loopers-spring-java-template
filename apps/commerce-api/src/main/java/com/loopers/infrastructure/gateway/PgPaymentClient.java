@@ -26,7 +26,7 @@ public class PgPaymentClient implements PaymentClient {
     @Retry(name = "pgRetry", fallbackMethod = "requestPaymentRetryFallback")
     @CircuitBreaker(name = "pgPayment", fallbackMethod = "requestPaymentFallback")
     @TimeLimiter(name = "pgPayment")
-    public PaymentResponse requestPayment(PaymentClient.PaymentRequest request) {
+    public PaymentClient.PaymentResponse requestPayment(PaymentClient.PaymentRequest request) {
 
         PgPaymentDto.PgPaymentRequest pgRequest = new PgPaymentDto.PgPaymentRequest(
                 request.orderId(),
@@ -38,45 +38,28 @@ public class PgPaymentClient implements PaymentClient {
 
         PgPaymentDto.PgPaymentResponse response = pgPaymentFeignClient.requestPayment(request.userId(), pgRequest);
 
-
-        try {
-            log.info("PG 결제 요청: orderKey={}, amount={}", request.orderId(), request.amount());
-
-//            PgPaymentDto.PgPaymentRequest pgRequest = new PgPaymentDto.PgPaymentRequest(
-//                    request.orderId(),
-//                    request.cardType(),
-//                    request.cardNo(),
-//                    request.amount(),
-//                    request.callbackUrl()
-//            );
-
-//            PgPaymentDto.PgPaymentResponse response = pgPaymentFeignClient.requestPayment(userId, pgRequest);
-
-            if (response != null && response.data() != null) {
-                log.info("PG 결제 요청 성공: transactionKey={}, status={}",
-                        response.data().transactionKey(),
-                        response.data().status());
-
-                PaymentResponse paymentResponse = new PaymentResponse(
-                        response.data().transactionKey(),
-                        response.data().status(),
-                        response.data().reason()
-                );
-                return paymentResponse;
-            } else {
-                log.error("PG 결제 요청 실패: 응답이 null입니다.");
-                throw new CoreException(ErrorType.INTERNAL_ERROR, "PG 결제 요청이 실패했습니다.");
+        String errorCode = response.meta().errorCode();
+        if (errorCode != null && !errorCode.isBlank()) {
+            if (errorCode.equals("Bad Request")) {
+                throw new CoreException(ErrorType.BAD_REQUEST, response.meta().message());
             }
-        } catch (Exception e) {
-            log.error("PG 결제 요청 중 오류 발생: {}", e.getMessage(), e);
-            throw new CoreException(ErrorType.INTERNAL_ERROR, "PG 결제 요청 중 오류가 발생했습니다: " + e.getMessage());
+
+            if (errorCode.equals("Internal Server Error")) {
+                throw new CoreException(ErrorType.INTERNAL_ERROR, "PG 시스템에 일시적인 오류가 발생했습니다.");
+            }
         }
+
+        return new PaymentResponse(
+                response.data().transactionKey(),
+                response.data().status(),
+                response.data().reason()
+        );
     }
 
     public CompletableFuture<PaymentResponse> requestPaymentRetryFallback(
             PaymentRequest request, String userId, Throwable t) {
         log.warn("PG 결제 요청 Retry Fallback 호출: orderKey={}, userId={}, error={}", request.orderId(), userId, t.getMessage());
-        
+
         PaymentResponse response = new PaymentResponse(
                 null,
                 "PENDING",
