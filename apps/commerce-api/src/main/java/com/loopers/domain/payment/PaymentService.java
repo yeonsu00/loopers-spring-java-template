@@ -1,26 +1,16 @@
 package com.loopers.domain.payment;
 
-import com.loopers.domain.payment.PaymentClient.PaymentRequest;
-import com.loopers.domain.payment.PaymentClient.PaymentResponse;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @RequiredArgsConstructor
 @Service
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentClient paymentClient;
-
-    @Value("${server.port:8080}")
-    private String serverPort;
 
     public void createPayment(Integer amount, String orderKey) {
         Payment payment = Payment.createPayment(amount, orderKey);
@@ -38,42 +28,33 @@ public class PaymentService {
         }
     }
 
-    public void applyCardInfo(Payment savedPayment, String cardType, String cardNumber) {
-        savedPayment.updateCard(cardType, cardNumber);
+    public Card createCard(String cardType, String cardNumber) {
+        return Card.createCard(cardType, cardNumber);
     }
 
-    @Transactional
-    public Payment requestPaymentToPg(Payment savedPayment, String cardType, String cardNo, String userId) {
-        String callbackUrl = String.format("http://localhost:%s/api/v1/payments/callback", serverPort);
-        PaymentRequest request = new PaymentRequest(
-                savedPayment.getOrderKey(),
-                cardType,
-                cardNo,
-                (long) savedPayment.getAmount(),
-                callbackUrl
+    public void applyCardInfo(Payment savedPayment, Card card) {
+        savedPayment.updateCard(card);
+    }
+
+    public Payment requestPaymentToPg(Payment payment, String loginId) {
+        PaymentClient.PaymentRequest request = new PaymentClient.PaymentRequest(
+                payment.getOrderKey(),
+                payment.getCard().getCardType(),
+                payment.getCard().getCardNumber(),
+                payment.getAmount(),
+                loginId
         );
 
-        try {
-            CompletableFuture<PaymentResponse> paymentFuture = paymentClient.requestPayment(request, userId);
-            PaymentResponse response = paymentFuture.get();
-            String transactionKey = response.transactionKey();
+        PaymentClient.PaymentResponse paymentResponse = paymentClient.requestPayment(request);
 
-            if (transactionKey != null && !transactionKey.isBlank()) {
-                savedPayment.updateTransactionKey(transactionKey);
-                savedPayment.updateStatus(PaymentStatus.COMPLETED);
-                savedPayment.updateCard(cardType, cardNo);
-                paymentRepository.savePayment(savedPayment);
-
-                log.info("PG 결제 요청 완료: orderKey={}, transactionKey={}", savedPayment.getOrderKey(), transactionKey);
-                return savedPayment;
-            } else {
-                log.error("PG 결제 요청 실패: transactionKey가 null입니다.");
-                throw new CoreException(ErrorType.INTERNAL_ERROR, "결제 요청에 실패했습니다.");
-            }
-        } catch (Exception e) {
-            log.error("PG 결제 요청 실패: orderKey={}, error={}", savedPayment.getOrderKey(), e.getMessage(), e);
-            throw new CoreException(ErrorType.INTERNAL_ERROR, "결제 요청에 실패했습니다.");
+        if (paymentResponse.isSuccess()) {
+            payment.updateStatus(PaymentStatus.COMPLETED);
+            payment.updateTransactionKey(paymentResponse.transactionKey());
+        } else {
+            payment.updateStatus(PaymentStatus.FAILED);
         }
+
+        return payment;
     }
 
     public Payment getPendingPaymentByOrderKey(String orderKey) {
@@ -85,15 +66,6 @@ public class PaymentService {
         }
 
         return payment;
-    }
-
-    public void completePayment(Payment savedPayment, String transactionKey) {
-        savedPayment.updateStatus(PaymentStatus.COMPLETED);
-        savedPayment.updateTransactionKey(transactionKey);
-    }
-
-    public void failPayment(Payment savedPayment) {
-        savedPayment.updateStatus(PaymentStatus.FAILED);
     }
 }
 
