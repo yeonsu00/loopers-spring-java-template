@@ -9,8 +9,6 @@ public interface OrderRepository {
 
     Optional<Order> findOrderByIdAndUserId(Long orderId, Long userId);
 
-    Optional<Order> findOrderById(Long orderId);
-
     Optional<Order> findByOrderKey(String orderKey);
 
     void saveOrder(Order order);

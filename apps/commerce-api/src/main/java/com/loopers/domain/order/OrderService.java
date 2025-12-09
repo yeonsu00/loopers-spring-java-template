@@ -6,6 +6,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,8 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
 
-    public Order createOrder(Long userId, String orderKey, Delivery delivery) {
+    public Order createOrder(Long userId, Delivery delivery) {
+        String orderKey = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         return Order.createOrder(userId, orderKey, delivery);
     }
 
@@ -76,5 +78,13 @@ public class OrderService {
 
     public void cancelOrder(Order order) {
         order.cancel();
+    }
+
+    public void applyPrice(Order order, int originalTotalPrice, int discountPrice) {
+        order.applyOriginalTotalPrice(originalTotalPrice);
+
+        if (discountPrice > 0) {
+            order.applyDiscountPrice(discountPrice);
+        }
     }
 }

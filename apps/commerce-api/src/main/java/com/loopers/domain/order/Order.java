@@ -172,4 +172,12 @@ public class Order extends BaseEntity {
     public boolean hasCoupon() {
         return this.couponId != null;
     }
+
+    public void applyOriginalTotalPrice(int originalTotalPrice) {
+        this.originalTotalPrice = originalTotalPrice;
+    }
+
+    public void applyDiscountPrice(int discountPrice) {
+        this.discountPrice = discountPrice;
+    }
 }
