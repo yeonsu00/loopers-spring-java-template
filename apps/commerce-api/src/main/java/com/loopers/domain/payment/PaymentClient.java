@@ -21,8 +21,13 @@ public interface PaymentClient {
         public boolean isSuccess() {
             return "SUCCESS".equalsIgnoreCase(status);
         }
+
+        public static PaymentResponse createPaymentResponse(String transactionKey, String status, String reason) {
+            return new PaymentResponse(transactionKey, status, reason);
+        }
+
+        public static PaymentResponse createFailResponse(String reason) {
+            return new PaymentResponse(null, "FAILED", reason);
+        }
     }
 }
-
-
-

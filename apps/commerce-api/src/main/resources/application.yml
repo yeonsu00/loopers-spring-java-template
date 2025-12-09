@@ -53,14 +53,8 @@ resilience4j:
         failureRateThreshold: 60
         slidingWindowSize: 20
         minimumNumberOfCalls: 10
-  timelimiter:
-    configs:
-      default:
-        timeoutDuration: 3s
-    instances:
-      pgPayment:
-        baseConfig: default
-        timeoutDuration: 3s
+        ignoreExceptions:
+          - com.loopers.support.error.CoreException
   retry:
     instances:
       pgRetry:

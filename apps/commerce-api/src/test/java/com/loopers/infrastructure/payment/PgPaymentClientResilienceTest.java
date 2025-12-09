@@ -3,7 +3,6 @@ package com.loopers.infrastructure.payment;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -16,8 +15,7 @@ import com.loopers.infrastructure.gateway.PgPaymentDto;
 import com.loopers.infrastructure.gateway.PgPaymentFeignClient;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.net.SocketTimeoutException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,14 +48,14 @@ class PgPaymentClientResilienceTest {
             circuitBreaker.reset();
         }
 
+        userId = "user123";
         paymentRequest = new PaymentRequest(
                 "order12345",
                 "SAMSUNG",
                 "1234-5678-9012-3456",
-                10000L,
-                "http://localhost:8080/api/v1/payments/callback"
+                10000,
+                userId
         );
-        userId = "user123";
     }
 
     @DisplayName("Circuit Breaker 동작 테스트")
@@ -74,8 +72,7 @@ class PgPaymentClientResilienceTest {
                     .requestPayment(anyString(), any(PgPaymentDto.PgPaymentRequest.class));
 
             // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
+            PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
 
             // then
             assertThat(response.transactionKey()).isEqualTo("txn-key-123");
@@ -106,7 +103,7 @@ class PgPaymentClientResilienceTest {
             // when
             for (int i = 0; i < 10; i++) {
                 try {
-                    pgPaymentClient.requestPayment(paymentRequest, userId).get(5, TimeUnit.SECONDS);
+                    pgPaymentClient.requestPayment(paymentRequest);
                 } catch (Exception e) {
                 }
             }
@@ -114,12 +111,11 @@ class PgPaymentClientResilienceTest {
             // then
             verify(pgPaymentFeignClient, times(10)).requestPayment(anyString(), any());
 
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
-            
+            PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
+
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("PENDING");
-            assertThat(response.reason()).contains("재시도 후에도 실패");
+            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.reason()).isEqualTo("PG 시스템이 일시적으로 사용할 수 없습니다.");
 
             verify(pgPaymentFeignClient, times(10)).requestPayment(anyString(), any());
         }
@@ -146,7 +142,7 @@ class PgPaymentClientResilienceTest {
 
             for (int i = 0; i < 10; i++) {
                 try {
-                    pgPaymentClient.requestPayment(paymentRequest, userId).get(5, TimeUnit.SECONDS);
+                    pgPaymentClient.requestPayment(paymentRequest);
                 } catch (Exception e) {
                 }
             }
@@ -161,8 +157,7 @@ class PgPaymentClientResilienceTest {
                     .requestPayment(anyString(), any());
 
             // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
+            PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
 
             // then
             assertThat(response.transactionKey()).isEqualTo("txn-key-123");
@@ -193,7 +188,7 @@ class PgPaymentClientResilienceTest {
 
             for (int i = 0; i < 10; i++) {
                 try {
-                    pgPaymentClient.requestPayment(paymentRequest, userId).get(5, TimeUnit.SECONDS);
+                    pgPaymentClient.requestPayment(paymentRequest);
                 } catch (Exception e) {
                 }
             }
@@ -208,13 +203,12 @@ class PgPaymentClientResilienceTest {
                     .requestPayment(anyString(), any());
 
             // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
+            PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
 
             // then
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("PENDING");
-            assertThat(response.reason()).contains("재시도 후에도 실패");
+            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.reason()).isEqualTo("PG 시스템이 일시적으로 사용할 수 없습니다.");
 
             verify(pgPaymentFeignClient, times(11)).requestPayment(anyString(), any());
         }
@@ -225,8 +219,8 @@ class PgPaymentClientResilienceTest {
     class RetryTest {
 
         @Test
-        @DisplayName("재시도 가능한 예외 발생 시 최대 2번 재시도한다 (총 3번 시도)")
-        void retriesUpTo2Times_whenRetryableException() throws Exception {
+        @DisplayName("재시도 가능한 예외 발생 시 CircuitBreaker Fallback이 호출된다")
+        void callsCircuitBreakerFallback_whenRetryableException() throws Exception {
             // given
             RuntimeException runtimeException = new RuntimeException("Internal Server Error");
 
@@ -235,82 +229,50 @@ class PgPaymentClientResilienceTest {
                     .requestPayment(anyString(), any());
 
             // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
+            PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
 
             // then
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("PENDING");
-            assertThat(response.reason()).contains("재시도 후에도 실패");
+            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.reason()).isEqualTo("PG 시스템이 일시적으로 사용할 수 없습니다.");
 
             verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());
         }
 
         @Test
-        @DisplayName("모든 재시도 실패 시 Retry Fallback이 호출된다")
-        void callsRetryFallback_whenAllRetriesFail() throws Exception {
+        @DisplayName("재시도 불가능한 예외(CoreException) 발생 시 재시도하지 않는다")
+        void throwsCoreException_whenNonRetryableException() {
             // given
-            RuntimeException runtimeException = new RuntimeException("Internal Server Error");
-            doThrow(runtimeException)
+            PgPaymentDto.PgPaymentResponse badRequestResponse = createErrorResponse("Bad Request", "주문 ID는 6자리 이상 문자열이어야 합니다.");
+            doReturn(badRequestResponse)
                     .when(pgPaymentFeignClient)
                     .requestPayment(anyString(), any());
 
-            // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
-
-            // then
-            assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("PENDING");
-            assertThat(response.reason()).contains("재시도 후에도 실패");
-
-            verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());
-        }
-
-        @Test
-        @DisplayName("재시도 불가능한 예외(CoreException) 발생 시 재시도하지 않지만 Fallback이 호출된다")
-        void doesNotRetry_whenNonRetryableException() throws Exception {
-            // given
-            doReturn(null)
-                    .when(pgPaymentFeignClient)
-                    .requestPayment(anyString(), any());
-
-            // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
-
-            // then
-            assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("PENDING");
-            assertThat(response.reason()).contains("재시도 후에도 실패");
-
+            // when & then
             verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());
         }
     }
 
-    @DisplayName("Time Limiter 동작 테스트")
+    @DisplayName("Feign 타임아웃 동작 테스트")
     @Nested
-    class TimeLimiterTest {
+    class FeignTimeoutTest {
 
         @Test
-        @DisplayName("3초를 초과하는 응답은 타임아웃된다")
-        void timesOut_whenResponseExceeds3Seconds() throws Exception {
+        @DisplayName("2초를 초과하는 응답은 Feign 타임아웃으로 인해 실패하고 CircuitBreaker Fallback이 호출된다")
+        void callsCircuitBreakerFallback_whenResponseExceeds2Seconds() throws Exception {
             // given
-            PgPaymentDto.PgPaymentResponse successResponse = createSuccessResponse("txn-key-123");
-            doAnswer(invocation -> {
-                        Thread.sleep(4000);
-                        return successResponse;
-                    })
+            SocketTimeoutException cause = new SocketTimeoutException("Read timed out");
+            RuntimeException timeoutException = new RuntimeException("Feign read timeout", cause);
+            doThrow(timeoutException)
                     .when(pgPaymentFeignClient)
                     .requestPayment(anyString(), any());
 
             // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            
+            PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
+
             // then
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
-            assertThat(response.transactionKey()).isEqualTo("txn-key-123");
-            assertThat(response.status()).isEqualTo("PENDING");
+            assertThat(response.transactionKey()).isNull();
+            assertThat(response.status()).isEqualTo("FAILED");
         }
     }
 
@@ -319,21 +281,16 @@ class PgPaymentClientResilienceTest {
     class ExternalSystemResponseTest {
 
         @Test
-        @DisplayName("400 Bad Request 발생 시 재시도하지 않고 Fallback이 호출된다")
-        void doesNotRetry_when400BadRequest() throws Exception {
+        @DisplayName("400 Bad Request 발생 시 재시도하지 않는다")
+        void throwsCoreException_when400BadRequest() {
             // given
-            doReturn(null)
+            PgPaymentDto.PgPaymentResponse badRequestResponse = createErrorResponse("Bad Request", "주문 ID는 6자리 이상 문자열이어야 합니다.");
+            doReturn(badRequestResponse)
                     .when(pgPaymentFeignClient)
                     .requestPayment(anyString(), any());
 
-            // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
-
-            // then
-            assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("PENDING");
-            assertThat(response.reason()).contains("재시도 후에도 실패");
+            // when & then
+            pgPaymentClient.requestPayment(paymentRequest);
 
             verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());
         }
@@ -348,8 +305,7 @@ class PgPaymentClientResilienceTest {
                     .requestPayment(anyString(), any());
 
             // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
+            PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
 
             // then
             assertThat(response.transactionKey()).isEqualTo("txn-key-123");
@@ -358,30 +314,23 @@ class PgPaymentClientResilienceTest {
         }
 
         @Test
-        @DisplayName("500 Internal Server Error 발생 시 재시도한다")
-        void retries_when500InternalServerError() throws Exception {
+        @DisplayName("500 Internal Server Error 발생 시 재시도하지 않는다.")
+        void throwsCoreException_when500InternalServerError() {
             // given
-            RuntimeException runtimeException = new RuntimeException("Internal Server Error");
-
-            doThrow(runtimeException)
+            PgPaymentDto.PgPaymentResponse internalServerErrorResponse = createErrorResponse("Internal Server Error", "PG 시스템에 일시적인 오류가 발생했습니다.");
+            doReturn(internalServerErrorResponse)
                     .when(pgPaymentFeignClient)
                     .requestPayment(anyString(), any());
 
-            // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
-
-            // then
-            assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("PENDING");
-            assertThat(response.reason()).contains("재시도 후에도 실패");
+            // when & then
+            pgPaymentClient.requestPayment(paymentRequest);
 
             verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());
         }
 
         @Test
-        @DisplayName("네트워크 연결 실패(RuntimeException) 발생 시 재시도한다")
-        void retries_whenRuntimeException() throws Exception {
+        @DisplayName("네트워크 연결 실패(RuntimeException) 발생 시 CircuitBreaker Fallback이 호출된다")
+        void callsCircuitBreakerFallback_whenRuntimeException() throws Exception {
             // given
             RuntimeException runtimeException = new RuntimeException("Connection refused");
 
@@ -390,13 +339,12 @@ class PgPaymentClientResilienceTest {
                     .requestPayment(anyString(), any());
 
             // when
-            CompletableFuture<PaymentResponse> future = pgPaymentClient.requestPayment(paymentRequest, userId);
-            PaymentResponse response = future.get(5, TimeUnit.SECONDS);
+            PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
 
             // then
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("PENDING");
-            assertThat(response.reason()).contains("재시도 후에도 실패");
+            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.reason()).isEqualTo("PG 시스템이 일시적으로 사용할 수 없습니다.");
 
             verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());
         }
@@ -408,6 +356,17 @@ class PgPaymentClientResilienceTest {
                 new PgPaymentDto.PgPaymentResponse.TransactionData(
                         transactionKey,
                         "PENDING",
+                        null
+                )
+        );
+    }
+
+    private PgPaymentDto.PgPaymentResponse createErrorResponse(String errorCode, String errorMessage) {
+        return new PgPaymentDto.PgPaymentResponse(
+                new PgPaymentDto.PgPaymentResponse.Meta("FAIL", errorCode, errorMessage),
+                new PgPaymentDto.PgPaymentResponse.TransactionData(
+                        null,
+                        null,
                         null
                 )
         );
