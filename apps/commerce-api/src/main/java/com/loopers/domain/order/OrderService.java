@@ -72,11 +72,9 @@ public class OrderService {
 
     public void payOrder(Order order) {
         order.pay();
-        orderRepository.saveOrder(order);
     }
 
     public void cancelOrder(Order order) {
         order.cancel();
-        orderRepository.saveOrder(order);
     }
 }

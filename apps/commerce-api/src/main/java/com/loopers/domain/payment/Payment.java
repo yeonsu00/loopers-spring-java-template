@@ -113,5 +113,9 @@ public class Payment extends BaseEntity {
         }
         this.card = Card.createCard(cardType, cardNumber);
     }
+
+    public boolean isCompleted() {
+        return this.status == PaymentStatus.COMPLETED;
+    }
 }
 

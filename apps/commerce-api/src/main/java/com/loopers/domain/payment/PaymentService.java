@@ -75,32 +75,24 @@ public class PaymentService {
         }
     }
 
-    public Payment getPendingPaymentByTransactionKey(String transactionKey) {
-        Payment payment = paymentRepository.findByTransactionKey(transactionKey)
+    public Payment getPendingPaymentByOrderKey(String orderKey) {
+        Payment payment = paymentRepository.findByOrderKey(orderKey)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
 
-        if (payment.getStatus() == PaymentStatus.COMPLETED) {
+        if (payment.isCompleted()) {
             throw new CoreException(ErrorType.CONFLICT, "이미 성공한 결제입니다.");
         }
 
         return payment;
     }
 
-    @Transactional
-    public void updatePaymentStatus(String transactionKey, PaymentStatus status) {
-        Payment payment = paymentRepository.findByTransactionKey(transactionKey)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
-        payment.updateStatus(status);
-        payment.updateTransactionKey(transactionKey);
-        paymentRepository.savePayment(payment);
+    public void completePayment(Payment savedPayment, String transactionKey) {
+        savedPayment.updateStatus(PaymentStatus.COMPLETED);
+        savedPayment.updateTransactionKey(transactionKey);
     }
 
-    @Transactional
-    public void updatePaymentStatusByOrderKey(String orderKey, PaymentStatus status) {
-        Payment payment = paymentRepository.findByOrderKey(orderKey)
-                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
-        payment.updateStatus(status);
-        paymentRepository.savePayment(payment);
+    public void failPayment(Payment savedPayment) {
+        savedPayment.updateStatus(PaymentStatus.FAILED);
     }
 }
 

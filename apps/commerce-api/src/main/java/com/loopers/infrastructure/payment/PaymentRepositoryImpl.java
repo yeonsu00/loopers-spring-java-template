@@ -21,10 +21,5 @@ public class PaymentRepositoryImpl implements PaymentRepository {
     public Optional<Payment> findByOrderKey(String orderKey) {
         return paymentJpaRepository.findByOrderKey(orderKey);
     }
-
-    @Override
-    public Optional<Payment> findByTransactionKey(String transactionKey) {
-        return paymentJpaRepository.findByTransactionKey(transactionKey);
-    }
 }
 

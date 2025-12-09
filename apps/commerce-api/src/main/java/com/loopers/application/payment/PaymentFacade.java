@@ -7,7 +7,6 @@ import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentService;
-import com.loopers.domain.payment.PaymentStatus;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
@@ -60,12 +59,12 @@ public class PaymentFacade {
 
     @Transactional
     public void handlePaymentCallback(PaymentV1Dto.PaymentCallbackRequest request) {
-        Payment payment = paymentService.getPendingPaymentByTransactionKey(request.transactionKey());
-        Order order = orderService.getOrderByOrderKey(payment.getOrderKey());
+        Payment payment = paymentService.getPendingPaymentByOrderKey(request.orderId());
+        Order order = orderService.getOrderByOrderKey(request.orderId());
 
         String status = request.status();
         switch (status) {
-            case "SUCCESS" -> handleSuccess(payment, order);
+            case "SUCCESS" -> handleSuccess(payment, order, request.transactionKey());
             case "FAILED" -> handleFailure(payment, order, request.reason());
             default -> {
                 log.warn("알 수 없는 결제 상태: transactionKey={}, status={}", request.transactionKey(), status);
@@ -73,38 +72,31 @@ public class PaymentFacade {
         }
     }
 
-    private void handleSuccess(Payment payment, Order order) {
+    private void handleSuccess(Payment payment, Order order, String transactionKey) {
         orderService.payOrder(order);
-        paymentService.updatePaymentStatus(payment.getTransactionKey(), PaymentStatus.COMPLETED);
+        paymentService.completePayment(payment, transactionKey);
 
         log.info("결제 완료 처리: orderId={}, transactionKey={}", order.getId(), payment.getTransactionKey());
     }
 
     private void handleFailure(Payment payment, Order order, String reason) {
         orderService.cancelOrder(order);
-        
-        if (payment.getTransactionKey() != null && !payment.getTransactionKey().isBlank()) {
-            paymentService.updatePaymentStatus(payment.getTransactionKey(), PaymentStatus.FAILED);
-        } else {
-            paymentService.updatePaymentStatusByOrderKey(payment.getOrderKey(), PaymentStatus.FAILED);
-        }
+        paymentService.failPayment(payment);
 
         for (OrderItem orderItem : order.getOrderItems()) {
-            Product product = productService.findProductById(orderItem.getProductId())
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다: " + orderItem.getProductId()));
+            Product product = productService.getProductById(orderItem.getProductId());
             productService.restoreStock(product, orderItem.getQuantity());
         }
 
-        int pointAmount = order.getOriginalTotalPrice() - (order.getDiscountPrice() != null ? order.getDiscountPrice() : 0);
-        pointService.restorePoint(order.getUserId(), pointAmount);
+        int restorePointAmount = order.getOriginalTotalPrice() - (order.getDiscountPrice() != null ? order.getDiscountPrice() : 0);
+        pointService.restorePoint(order.getUserId(), restorePointAmount);
 
-        if (order.getCouponId() != null) {
+        if (order.hasCoupon()) {
             Coupon coupon = couponService.getCouponByIdAndUserId(order.getCouponId(), order.getUserId());
             couponService.restoreCoupon(coupon);
         }
 
-        log.warn("결제 실패 처리: orderKey={}, transactionKey={}, reason={}",
-                payment.getOrderKey(), payment.getTransactionKey(), reason);
+        log.warn("결제 실패 처리: orderKey={}, reason={}", payment.getOrderKey(), reason);
     }
 }
 

@@ -19,16 +19,19 @@ public class ProductService {
         return productRepository.findProductById(productId);
     }
 
+    public Product getProductById(Long productId) {
+        return productRepository.findProductById(productId)
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
+    }
+
     @Transactional
     public void reduceStock(Product product, Integer quantity) {
         product.reduceStock(quantity);
         productRepository.saveProduct(product);
     }
 
-    @Transactional
     public void restoreStock(Product product, Integer quantity) {
         product.restoreStock(quantity);
-        productRepository.saveProduct(product);
     }
 
     public List<Product> findProductsByLatest(Long brandId, int page, int size) {
