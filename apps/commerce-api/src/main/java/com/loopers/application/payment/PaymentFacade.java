@@ -7,7 +7,6 @@ import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentService;
-import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
@@ -29,13 +28,13 @@ public class PaymentFacade {
     private final OrderService orderService;
     private final UserService userService;
     private final ProductService productService;
-    private final PointService pointService;
     private final CouponService couponService;
 
     @Transactional
     public PaymentInfo requestPayment(PaymentCommand.RequestPaymentCommand command) {
         Payment savedPayment = paymentService.getPaymentByOrderKey(command.orderKey());
-        paymentService.validatePaymentStatus(savedPayment);
+        paymentService.validatePaymentStatusPending(savedPayment);
+        paymentService.applyCardInfo(savedPayment, command.cardType(), command.cardNo());
 
         User user = userService.getUserByLoginId(command.loginId());
         Order order = orderService.getOrderByOrderKey(command.orderKey());
@@ -87,9 +86,6 @@ public class PaymentFacade {
             Product product = productService.getProductById(orderItem.getProductId());
             productService.restoreStock(product, orderItem.getQuantity());
         }
-
-        int restorePointAmount = order.getOriginalTotalPrice() - (order.getDiscountPrice() != null ? order.getDiscountPrice() : 0);
-        pointService.restorePoint(order.getUserId(), restorePointAmount);
 
         if (order.hasCoupon()) {
             Coupon coupon = couponService.getCouponByIdAndUserId(order.getCouponId(), order.getUserId());

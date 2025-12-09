@@ -32,13 +32,14 @@ public class PaymentService {
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
     }
 
-    public void validatePaymentStatus(Payment payment) {
-        if (payment.getStatus() != PaymentStatus.PENDING) {
-            if (payment.getStatus() == PaymentStatus.COMPLETED) {
-                throw new CoreException(ErrorType.CONFLICT, "이미 성공한 결제입니다.");
-            }
-            throw new CoreException(ErrorType.BAD_REQUEST, "결제 대기 상태인 경우에만 결제 요청할 수 있습니다. 현재 상태: " + payment.getStatus());
+    public void validatePaymentStatusPending(Payment payment) {
+        if (!payment.isPending()) {
+            throw new CoreException(ErrorType.CONFLICT, "결제 대기 상태가 아닙니다.");
         }
+    }
+
+    public void applyCardInfo(Payment savedPayment, String cardType, String cardNumber) {
+        savedPayment.updateCard(cardType, cardNumber);
     }
 
     @Transactional
