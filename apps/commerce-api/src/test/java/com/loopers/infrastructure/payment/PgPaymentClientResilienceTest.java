@@ -13,6 +13,8 @@ import com.loopers.domain.payment.PaymentClient.PaymentResponse;
 import com.loopers.infrastructure.gateway.PgPaymentClient;
 import com.loopers.infrastructure.gateway.PgPaymentDto;
 import com.loopers.infrastructure.gateway.PgPaymentFeignClient;
+import com.loopers.support.error.CoreException;
+import com.loopers.support.error.ErrorType;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import java.net.SocketTimeoutException;
@@ -243,12 +245,15 @@ class PgPaymentClientResilienceTest {
         @DisplayName("재시도 불가능한 예외(CoreException) 발생 시 재시도하지 않는다")
         void throwsCoreException_whenNonRetryableException() {
             // given
-            PgPaymentDto.PgPaymentResponse badRequestResponse = createErrorResponse("Bad Request", "주문 ID는 6자리 이상 문자열이어야 합니다.");
-            doReturn(badRequestResponse)
+            CoreException coreException = new CoreException(ErrorType.BAD_REQUEST, "Bad Request");
+            doThrow(coreException)
                     .when(pgPaymentFeignClient)
                     .requestPayment(anyString(), any());
 
-            // when & then
+            // when
+            pgPaymentClient.requestPayment(paymentRequest);
+
+            // then
             verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());
         }
     }
