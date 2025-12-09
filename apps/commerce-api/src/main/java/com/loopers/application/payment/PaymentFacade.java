@@ -5,6 +5,7 @@ import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.payment.Card;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.product.Product;
@@ -34,20 +35,16 @@ public class PaymentFacade {
     public PaymentInfo requestPayment(PaymentCommand.RequestPaymentCommand command) {
         Payment savedPayment = paymentService.getPaymentByOrderKey(command.orderKey());
         paymentService.validatePaymentStatusPending(savedPayment);
-        paymentService.applyCardInfo(savedPayment, command.cardType(), command.cardNo());
+
+        Card card = paymentService.createCard(command.cardType(), command.cardNo());
+        paymentService.applyCardInfo(savedPayment, card);
 
         User user = userService.getUserByLoginId(command.loginId());
         Order order = orderService.getOrderByOrderKey(command.orderKey());
         orderService.validateIsUserOrder(command.orderKey(), user.getId());
 
         try {
-            Payment updatedPayment = paymentService.requestPaymentToPg(
-                    savedPayment,
-                    command.cardType(),
-                    command.cardNo(),
-                    command.loginId()
-            );
-
+            Payment updatedPayment = paymentService.requestPaymentToPg(savedPayment, command.loginId());
             return PaymentInfo.from(updatedPayment);
         } catch (Exception e) {
             log.error("PG 결제 요청 실패: orderKey={}, error={}", command.orderKey(), e.getMessage(), e);
@@ -63,7 +60,7 @@ public class PaymentFacade {
 
         String status = request.status();
         switch (status) {
-            case "SUCCESS" -> handleSuccess(payment, order, request.transactionKey());
+            case "SUCCESS" -> handleSuccess(payment, order);
             case "FAILED" -> handleFailure(payment, order, request.reason());
             default -> {
                 log.warn("알 수 없는 결제 상태: transactionKey={}, status={}", request.transactionKey(), status);
@@ -71,16 +68,13 @@ public class PaymentFacade {
         }
     }
 
-    private void handleSuccess(Payment payment, Order order, String transactionKey) {
+    private void handleSuccess(Payment payment, Order order) {
         orderService.payOrder(order);
-        paymentService.completePayment(payment, transactionKey);
-
         log.info("결제 완료 처리: orderId={}, transactionKey={}", order.getId(), payment.getTransactionKey());
     }
 
     private void handleFailure(Payment payment, Order order, String reason) {
         orderService.cancelOrder(order);
-        paymentService.failPayment(payment);
 
         for (OrderItem orderItem : order.getOrderItems()) {
             Product product = productService.getProductById(orderItem.getProductId());

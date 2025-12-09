@@ -1,17 +1,15 @@
 package com.loopers.domain.payment;
 
-import java.util.concurrent.CompletableFuture;
-
 public interface PaymentClient {
 
-    CompletableFuture<PaymentResponse> requestPayment(PaymentRequest request, String userId);
+    PaymentClient.PaymentResponse requestPayment(PaymentClient.PaymentRequest request);
 
     record PaymentRequest(
             String orderId,
             String cardType,
             String cardNo,
-            Long amount,
-            String callbackUrl
+            Integer amount,
+            String userId
     ) {
     }
 
@@ -20,6 +18,9 @@ public interface PaymentClient {
             String status,
             String reason
     ) {
+        public boolean isSuccess() {
+            return "SUCCESS".equalsIgnoreCase(status);
+        }
     }
 }
 

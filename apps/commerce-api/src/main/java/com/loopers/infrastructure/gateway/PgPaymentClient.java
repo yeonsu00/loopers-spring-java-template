@@ -9,6 +9,7 @@ import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -16,25 +17,40 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PgPaymentClient implements PaymentClient {
 
+    @Value("${pg-simulator.callback-url}")
+    private String callbackUrl;
+
     private final PgPaymentFeignClient pgPaymentFeignClient;
 
     @Override
     @Retry(name = "pgRetry", fallbackMethod = "requestPaymentRetryFallback")
     @CircuitBreaker(name = "pgPayment", fallbackMethod = "requestPaymentFallback")
     @TimeLimiter(name = "pgPayment")
-    public CompletableFuture<PaymentResponse> requestPayment(PaymentRequest request, String userId) {
+    public PaymentResponse requestPayment(PaymentClient.PaymentRequest request) {
+
+        PgPaymentDto.PgPaymentRequest pgRequest = new PgPaymentDto.PgPaymentRequest(
+                request.orderId(),
+                request.cardType(),
+                request.cardNo(),
+                (long) request.amount(),
+                callbackUrl
+        );
+
+        PgPaymentDto.PgPaymentResponse response = pgPaymentFeignClient.requestPayment(request.userId(), pgRequest);
+
+
         try {
             log.info("PG 결제 요청: orderKey={}, amount={}", request.orderId(), request.amount());
 
-            PgPaymentDto.PgPaymentRequest pgRequest = new PgPaymentDto.PgPaymentRequest(
-                    request.orderId(),
-                    request.cardType(),
-                    request.cardNo(),
-                    request.amount(),
-                    request.callbackUrl()
-            );
+//            PgPaymentDto.PgPaymentRequest pgRequest = new PgPaymentDto.PgPaymentRequest(
+//                    request.orderId(),
+//                    request.cardType(),
+//                    request.cardNo(),
+//                    request.amount(),
+//                    request.callbackUrl()
+//            );
 
-            PgPaymentDto.PgPaymentResponse response = pgPaymentFeignClient.requestPayment(userId, pgRequest);
+//            PgPaymentDto.PgPaymentResponse response = pgPaymentFeignClient.requestPayment(userId, pgRequest);
 
             if (response != null && response.data() != null) {
                 log.info("PG 결제 요청 성공: transactionKey={}, status={}",
@@ -46,7 +62,7 @@ public class PgPaymentClient implements PaymentClient {
                         response.data().status(),
                         response.data().reason()
                 );
-                return CompletableFuture.completedFuture(paymentResponse);
+                return paymentResponse;
             } else {
                 log.error("PG 결제 요청 실패: 응답이 null입니다.");
                 throw new CoreException(ErrorType.INTERNAL_ERROR, "PG 결제 요청이 실패했습니다.");

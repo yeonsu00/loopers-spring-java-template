@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(
         name = "pgPaymentClient",
-        url = "${pg-simulator.url:http://localhost:8081}",
-        path = "/api/v1/payments",
+        url = "${pg-simulator.url}",
+        path = "${pg-simulator.path}",
         configuration = PaymentClientConfig.class
 )
 public interface PgPaymentFeignClient {
