@@ -2,6 +2,8 @@ package com.loopers.domain.payment;
 
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
+import java.time.ZonedDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -50,7 +52,7 @@ public class PaymentService {
         if (paymentResponse.isSuccess()) {
             payment.updateStatus(PaymentStatus.COMPLETED);
             payment.updateTransactionKey(paymentResponse.transactionKey());
-        } else {
+        } else if (paymentResponse.isFail()) {
             payment.updateStatus(PaymentStatus.FAILED);
         }
 
@@ -63,6 +65,38 @@ public class PaymentService {
 
         if (payment.isCompleted()) {
             throw new CoreException(ErrorType.CONFLICT, "이미 성공한 결제입니다.");
+        }
+
+        return payment;
+    }
+
+    public List<Payment> getPendingPaymentsCreatedBefore(ZonedDateTime before) {
+        return paymentRepository.getPendingPaymentsCreatedBefore(before);
+    }
+
+    public Payment checkPaymentStatusFromPg(Payment payment, String loginId) {
+        PaymentClient.PaymentResponse paymentResponse;
+
+        if (payment.hasTransactionKey()) {
+            PaymentClient.PaymentStatusRequest request = new PaymentClient.PaymentStatusRequest(
+                    payment.getTransactionKey(),
+                    loginId
+            );
+            paymentResponse = paymentClient.getPaymentStatusByTransactionKey(request);
+        } else {
+            PaymentClient.PaymentStatusByOrderKeyRequest request = new PaymentClient.PaymentStatusByOrderKeyRequest(
+                    payment.getOrderKey(),
+                    loginId
+            );
+            paymentResponse = paymentClient.getPaymentStatusByOrderKey(request);
+
+        }
+
+        if (paymentResponse.isSuccess()) {
+            payment.updateStatus(PaymentStatus.COMPLETED);
+            payment.updateTransactionKey(paymentResponse.transactionKey());
+        } else {
+            payment.updateStatus(PaymentStatus.FAILED);
         }
 
         return payment;

@@ -68,6 +68,19 @@ public class PaymentFacade {
         }
     }
 
+    @Transactional
+    public void syncPaymentStatus(Payment payment) {
+        Order order = orderService.getOrderByOrderKey(payment.getOrderKey());
+        User user = userService.getUserById(order.getUserId());
+        Payment updatedPayment = paymentService.checkPaymentStatusFromPg(payment, user.getLoginId().getId());
+
+        if (updatedPayment.isCompleted()) {
+            handleSuccess(updatedPayment, order);
+        } else if (updatedPayment.isFailed()) {
+            handleFailure(updatedPayment, order, "PG 상태 확인 결과 결제 실패");
+        }
+    }
+
     private void handleSuccess(Payment payment, Order order) {
         orderService.payOrder(order);
         log.info("결제 완료 처리: orderId={}, transactionKey={}", order.getId(), payment.getTransactionKey());

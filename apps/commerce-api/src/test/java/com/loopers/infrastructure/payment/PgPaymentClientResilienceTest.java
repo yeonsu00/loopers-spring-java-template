@@ -116,7 +116,7 @@ class PgPaymentClientResilienceTest {
             PaymentResponse response = pgPaymentClient.requestPayment(paymentRequest);
 
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.status()).isEqualTo("PENDING");
             assertThat(response.reason()).isEqualTo("PG 시스템이 일시적으로 사용할 수 없습니다.");
 
             verify(pgPaymentFeignClient, times(10)).requestPayment(anyString(), any());
@@ -209,7 +209,7 @@ class PgPaymentClientResilienceTest {
 
             // then
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.status()).isEqualTo("PENDING");
             assertThat(response.reason()).isEqualTo("PG 시스템이 일시적으로 사용할 수 없습니다.");
 
             verify(pgPaymentFeignClient, times(11)).requestPayment(anyString(), any());
@@ -235,7 +235,7 @@ class PgPaymentClientResilienceTest {
 
             // then
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.status()).isEqualTo("PENDING");
             assertThat(response.reason()).isEqualTo("PG 시스템이 일시적으로 사용할 수 없습니다.");
 
             verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());
@@ -277,7 +277,7 @@ class PgPaymentClientResilienceTest {
 
             // then
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.status()).isEqualTo("PENDING");
         }
     }
 
@@ -348,7 +348,7 @@ class PgPaymentClientResilienceTest {
 
             // then
             assertThat(response.transactionKey()).isNull();
-            assertThat(response.status()).isEqualTo("FAILED");
+            assertThat(response.status()).isEqualTo("PENDING");
             assertThat(response.reason()).isEqualTo("PG 시스템이 일시적으로 사용할 수 없습니다.");
 
             verify(pgPaymentFeignClient, times(1)).requestPayment(anyString(), any());

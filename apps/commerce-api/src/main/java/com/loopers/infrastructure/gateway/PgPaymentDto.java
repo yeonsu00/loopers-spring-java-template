@@ -1,6 +1,7 @@
 package com.loopers.infrastructure.gateway;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 public class PgPaymentDto {
 
@@ -29,6 +30,28 @@ public class PgPaymentDto {
                 @JsonProperty("status") String status,
                 @JsonProperty("reason") String reason
         ) {
+        }
+    }
+
+    public record PgPaymentOrderResponse(
+            @JsonProperty("meta") PgPaymentResponse.Meta meta,
+            @JsonProperty("data") OrderData data
+    ) {
+        public record OrderData(
+                @JsonProperty("orderId") String orderId,
+                @JsonProperty("transactions") List<TransactionData> transactions
+        ) {
+        }
+
+        public record TransactionData(
+                @JsonProperty("transactionKey") String transactionKey,
+                @JsonProperty("status") String status,
+                @JsonProperty("reason") String reason
+        ) {
+        }
+
+        public boolean hasTransactionKey() {
+            return data.transactions() != null && !data.transactions().isEmpty();
         }
     }
 }

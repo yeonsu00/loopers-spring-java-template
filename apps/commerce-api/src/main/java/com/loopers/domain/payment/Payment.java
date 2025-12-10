@@ -118,5 +118,13 @@ public class Payment extends BaseEntity {
     public boolean isPending() {
         return this.status == PaymentStatus.PENDING;
     }
+
+    public boolean isFailed() {
+        return this.status == PaymentStatus.FAILED;
+    }
+
+    public boolean hasTransactionKey() {
+        return this.transactionKey != null && !this.transactionKey.isBlank();
+    }
 }
 
