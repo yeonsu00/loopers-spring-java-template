@@ -1,7 +1,6 @@
 package com.loopers.interfaces.api.order;
 
 import com.loopers.application.order.OrderCommand;
-import com.loopers.application.order.OrderCommand.CreateOrderCommand;
 import com.loopers.application.order.OrderInfo;
 import java.util.List;
 
@@ -10,9 +9,10 @@ public class OrderV1Dto {
     public record OrderRequest(
             List<OrderItemRequest> orderItems,
             Long couponId,
-            DeliveryRequest delivery
+            DeliveryRequest delivery,
+            String paymentMethod
     ) {
-        public CreateOrderCommand toCommand(String loginId) {
+        public OrderCommand.CreateOrderCommand toCommand(String loginId) {
             List<OrderCommand.OrderItemCommand> itemCommands = orderItems.stream()
                     .map(OrderItemRequest::toCommand)
                     .toList();
@@ -21,7 +21,8 @@ public class OrderV1Dto {
                     loginId,
                     itemCommands,
                     couponId,
-                    delivery.toCommand()
+                    delivery.toCommand(),
+                    OrderCommand.PaymentMethod.fromValue(paymentMethod)
             );
         }
     }

@@ -5,15 +5,14 @@ import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.payment.Card;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentService;
-import com.loopers.domain.payment.PaymentStatus;
-import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import com.loopers.domain.user.User;
 import com.loopers.domain.user.UserService;
-import com.loopers.interfaces.api.payment.PaymentV1Dto.PaymentCallbackRequest;
+import com.loopers.interfaces.api.payment.PaymentV1Dto;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -30,26 +29,22 @@ public class PaymentFacade {
     private final OrderService orderService;
     private final UserService userService;
     private final ProductService productService;
-    private final PointService pointService;
     private final CouponService couponService;
 
     @Transactional
     public PaymentInfo requestPayment(PaymentCommand.RequestPaymentCommand command) {
         Payment savedPayment = paymentService.getPaymentByOrderKey(command.orderKey());
-        paymentService.validatePaymentStatus(savedPayment);
+        paymentService.validatePaymentStatusPending(savedPayment);
+
+        Card card = paymentService.createCard(command.cardType(), command.cardNo());
+        paymentService.applyCardInfo(savedPayment, card);
 
         User user = userService.getUserByLoginId(command.loginId());
         Order order = orderService.getOrderByOrderKey(command.orderKey());
         orderService.validateIsUserOrder(command.orderKey(), user.getId());
 
         try {
-            Payment updatedPayment = paymentService.requestPaymentToPg(
-                    savedPayment,
-                    command.cardType(),
-                    command.cardNo(),
-                    command.loginId()
-            );
-
+            Payment updatedPayment = paymentService.requestPaymentToPg(savedPayment, command.loginId());
             return PaymentInfo.from(updatedPayment);
         } catch (Exception e) {
             log.error("PG 결제 요청 실패: orderKey={}, error={}", command.orderKey(), e.getMessage(), e);
@@ -59,9 +54,9 @@ public class PaymentFacade {
     }
 
     @Transactional
-    public void handlePaymentCallback(PaymentCallbackRequest request) {
-        Payment payment = paymentService.getPendingPaymentByTransactionKey(request.transactionKey());
-        Order order = orderService.getOrderByOrderKey(payment.getOrderKey());
+    public void handlePaymentCallback(PaymentV1Dto.PaymentCallbackRequest request) {
+        Payment payment = paymentService.getPendingPaymentByOrderKey(request.orderId());
+        Order order = orderService.getOrderByOrderKey(request.orderId());
 
         String status = request.status();
         switch (status) {
@@ -73,38 +68,38 @@ public class PaymentFacade {
         }
     }
 
+    @Transactional
+    public void syncPaymentStatus(Payment payment) {
+        Order order = orderService.getOrderByOrderKey(payment.getOrderKey());
+        User user = userService.getUserById(order.getUserId());
+        Payment updatedPayment = paymentService.checkPaymentStatusFromPg(payment, user.getLoginId().getId());
+
+        if (updatedPayment.isCompleted()) {
+            handleSuccess(updatedPayment, order);
+        } else if (updatedPayment.isFailed()) {
+            handleFailure(updatedPayment, order, "PG 상태 확인 결과 결제 실패");
+        }
+    }
+
     private void handleSuccess(Payment payment, Order order) {
         orderService.payOrder(order);
-        paymentService.updatePaymentStatus(payment.getTransactionKey(), PaymentStatus.COMPLETED);
-
         log.info("결제 완료 처리: orderId={}, transactionKey={}", order.getId(), payment.getTransactionKey());
     }
 
     private void handleFailure(Payment payment, Order order, String reason) {
         orderService.cancelOrder(order);
-        
-        if (payment.getTransactionKey() != null && !payment.getTransactionKey().isBlank()) {
-            paymentService.updatePaymentStatus(payment.getTransactionKey(), PaymentStatus.FAILED);
-        } else {
-            paymentService.updatePaymentStatusByOrderKey(payment.getOrderKey(), PaymentStatus.FAILED);
-        }
 
         for (OrderItem orderItem : order.getOrderItems()) {
-            Product product = productService.findProductById(orderItem.getProductId())
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다: " + orderItem.getProductId()));
+            Product product = productService.getProductById(orderItem.getProductId());
             productService.restoreStock(product, orderItem.getQuantity());
         }
 
-        int pointAmount = order.getOriginalTotalPrice() - (order.getDiscountPrice() != null ? order.getDiscountPrice() : 0);
-        pointService.restorePoint(order.getUserId(), pointAmount);
-
-        if (order.getCouponId() != null) {
+        if (order.hasCoupon()) {
             Coupon coupon = couponService.getCouponByIdAndUserId(order.getCouponId(), order.getUserId());
             couponService.restoreCoupon(coupon);
         }
 
-        log.warn("결제 실패 처리: orderKey={}, transactionKey={}, reason={}",
-                payment.getOrderKey(), payment.getTransactionKey(), reason);
+        log.warn("결제 실패 처리: orderKey={}, reason={}", payment.getOrderKey(), reason);
     }
 }
 

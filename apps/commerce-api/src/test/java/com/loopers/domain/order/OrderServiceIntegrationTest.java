@@ -48,11 +48,10 @@ class OrderServiceIntegrationTest {
         void createsOrder_whenUserIdAndDeliveryAreProvided() {
             // arrange
             Long userId = 1L;
-            String orderKey = "order12345";
             Delivery delivery = createDelivery();
 
             // act
-            Order order = orderService.createOrder(userId, orderKey, delivery);
+            Order order = orderService.createOrder(userId, delivery);
 
             // assert
             assertAll(
