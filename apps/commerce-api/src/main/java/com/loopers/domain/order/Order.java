@@ -168,4 +168,16 @@ public class Order extends BaseEntity {
             throw new CoreException(ErrorType.BAD_REQUEST, "가격은 0보다 커야 합니다.");
         }
     }
+
+    public boolean hasCoupon() {
+        return this.couponId != null;
+    }
+
+    public void applyOriginalTotalPrice(int originalTotalPrice) {
+        this.originalTotalPrice = originalTotalPrice;
+    }
+
+    public void applyDiscountPrice(int discountPrice) {
+        this.discountPrice = discountPrice;
+    }
 }

@@ -107,11 +107,24 @@ public class Payment extends BaseEntity {
         this.transactionKey = transactionKey;
     }
 
-    public void updateCard(String cardType, String cardNumber) {
-        if (cardType == null || cardNumber == null) {
-            throw new CoreException(ErrorType.BAD_REQUEST, "카드 타입과 카드 번호는 필수입니다.");
-        }
-        this.card = Card.createCard(cardType, cardNumber);
+    public void updateCard(Card card) {
+        this.card = card;
+    }
+
+    public boolean isCompleted() {
+        return this.status == PaymentStatus.COMPLETED;
+    }
+
+    public boolean isPending() {
+        return this.status == PaymentStatus.PENDING;
+    }
+
+    public boolean isFailed() {
+        return this.status == PaymentStatus.FAILED;
+    }
+
+    public boolean hasTransactionKey() {
+        return this.transactionKey != null && !this.transactionKey.isBlank();
     }
 }
 

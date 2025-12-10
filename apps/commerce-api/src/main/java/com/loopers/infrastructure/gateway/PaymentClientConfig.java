@@ -1,4 +1,4 @@
-package com.loopers.infrastructure.payment;
+package com.loopers.infrastructure.gateway;
 
 import feign.Request;
 import feign.Retryer;

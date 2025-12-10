@@ -1,17 +1,31 @@
 package com.loopers.domain.payment;
 
-import java.util.concurrent.CompletableFuture;
-
 public interface PaymentClient {
 
-    CompletableFuture<PaymentResponse> requestPayment(PaymentRequest request, String userId);
+    PaymentClient.PaymentResponse requestPayment(PaymentClient.PaymentRequest request);
+
+    PaymentClient.PaymentResponse getPaymentStatusByTransactionKey(PaymentClient.PaymentStatusRequest request);
+
+    PaymentClient.PaymentResponse getPaymentStatusByOrderKey(PaymentClient.PaymentStatusByOrderKeyRequest request);
 
     record PaymentRequest(
             String orderId,
             String cardType,
             String cardNo,
-            Long amount,
-            String callbackUrl
+            Integer amount,
+            String userId
+    ) {
+    }
+
+    record PaymentStatusRequest(
+            String transactionKey,
+            String userId
+    ) {
+    }
+
+    record PaymentStatusByOrderKeyRequest(
+            String orderKey,
+            String userId
     ) {
     }
 
@@ -20,8 +34,20 @@ public interface PaymentClient {
             String status,
             String reason
     ) {
+        public boolean isSuccess() {
+            return "SUCCESS".equalsIgnoreCase(status);
+        }
+
+        public boolean isFail() {
+            return "FAIL".equalsIgnoreCase(status);
+        }
+
+        public static PaymentResponse createPaymentResponse(String transactionKey, String status, String reason) {
+            return new PaymentResponse(transactionKey, status, reason);
+        }
+
+        public static PaymentResponse createFailResponse(String reason) {
+            return new PaymentResponse(null, "PENDING", reason);
+        }
     }
 }
-
-
-
