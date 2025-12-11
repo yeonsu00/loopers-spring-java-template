@@ -1,6 +1,7 @@
 package com.loopers.application.order;
 
 import com.loopers.application.order.OrderCommand.PaymentMethod;
+import com.loopers.application.userbehavior.UserBehaviorEvent;
 import com.loopers.domain.coupon.Coupon;
 import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.Delivery;
@@ -76,6 +77,15 @@ public class OrderFacade {
         } else {
             throw new CoreException(ErrorType.BAD_REQUEST, "지원하지 않는 결제 수단입니다.");
         }
+
+        eventPublisher.publishEvent(
+                UserBehaviorEvent.OrderCreated.from(
+                        user.getId(),
+                        order.getOrderKey(),
+                        originalTotalPrice,
+                        discountPrice
+                )
+        );
 
         return OrderInfo.from(order, order.getOrderItems(), delivery, order.getOrderKey());
     }

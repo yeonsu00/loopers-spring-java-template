@@ -1,5 +1,6 @@
 package com.loopers.application.payment;
 
+import com.loopers.application.userbehavior.UserBehaviorEvent;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.Card;
@@ -39,6 +40,15 @@ public class PaymentFacade {
 
         try {
             paymentService.requestPaymentToPg(payment, command.loginId());
+
+            eventPublisher.publishEvent(
+                    UserBehaviorEvent.PaymentRequested.from(
+                            user.getId(),
+                            command.orderKey(),
+                            payment.getAmount()
+                    )
+            );
+            
             return PaymentInfo.from(payment);
         } catch (Exception e) {
             log.error("PG 결제 요청 실패: orderKey={}, error={}", command.orderKey(), e.getMessage(), e);

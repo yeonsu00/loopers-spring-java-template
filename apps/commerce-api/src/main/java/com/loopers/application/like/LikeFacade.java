@@ -1,6 +1,7 @@
 package com.loopers.application.like;
 
 import com.loopers.application.product.ProductInfo;
+import com.loopers.application.userbehavior.UserBehaviorEvent;
 import com.loopers.domain.brand.BrandService;
 import com.loopers.domain.like.LikeService;
 import com.loopers.domain.product.Product;
@@ -47,6 +48,7 @@ public class LikeFacade {
 
         if (wasCreated) {
             eventPublisher.publishEvent(LikeEvent.LikeRecorded.from(command.productId()));
+            eventPublisher.publishEvent(UserBehaviorEvent.LikeRecorded.from(user.getId(), command.productId()));
         }
 
         Product product = productService.findProductById(command.productId())
@@ -81,6 +83,7 @@ public class LikeFacade {
 
         if (wasDeleted) {
             eventPublisher.publishEvent(LikeEvent.LikeCancelled.from(command.productId()));
+            eventPublisher.publishEvent(UserBehaviorEvent.LikeCancelled.from(user.getId(), command.productId()));
         }
 
         Product product = productService.findProductById(command.productId())
