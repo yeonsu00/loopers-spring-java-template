@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -29,6 +30,7 @@ public class LikeFacade {
     private final LikeService likeService;
     private final ProductService productService;
     private final BrandService brandService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Retryable(
             retryFor = OptimisticLockingFailureException.class,
@@ -43,13 +45,12 @@ public class LikeFacade {
 
         boolean wasCreated = likeService.recordLikeIfAbsent(user.getId(), command.productId());
 
-        Product product;
         if (wasCreated) {
-            product = productService.increaseLikeCount(command.productId());
-        } else {
-            product = productService.findProductById(command.productId())
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
+            eventPublisher.publishEvent(LikeEvent.LikeRecorded.from(command.productId()));
         }
+
+        Product product = productService.findProductById(command.productId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
 
         return LikeInfo.from(
                 product.getId(),
@@ -78,13 +79,12 @@ public class LikeFacade {
 
         boolean wasDeleted = likeService.cancelLikeIfPresent(user.getId(), command.productId());
 
-        Product product;
         if (wasDeleted) {
-            product = productService.decreaseLikeCount(command.productId());
-        } else {
-            product = productService.findProductById(command.productId())
-                    .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
+            eventPublisher.publishEvent(LikeEvent.LikeCancelled.from(command.productId()));
         }
+
+        Product product = productService.findProductById(command.productId())
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
 
         return LikeInfo.from(
                 product.getId(),
