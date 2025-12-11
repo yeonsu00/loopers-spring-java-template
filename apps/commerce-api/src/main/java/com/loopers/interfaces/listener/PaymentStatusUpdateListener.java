@@ -2,11 +2,9 @@ package com.loopers.interfaces.listener;
 
 import com.loopers.application.payment.PaymentEvent;
 import com.loopers.domain.payment.Payment;
-import com.loopers.domain.payment.PaymentRepository;
 import com.loopers.domain.payment.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
@@ -18,9 +16,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class PaymentStatusUpdateListener {
 
     private final PaymentService paymentService;
-    private final PaymentRepository paymentRepository;
 
-    @Async
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     @Transactional
     public void handle(PaymentEvent.PaymentStatusUpdateRequest event) {
@@ -33,8 +29,6 @@ public class PaymentStatusUpdateListener {
         if (event.transactionKey() != null) {
             payment.updateTransactionKey(event.transactionKey());
         }
-
-        paymentRepository.savePayment(payment);
     }
 }
 

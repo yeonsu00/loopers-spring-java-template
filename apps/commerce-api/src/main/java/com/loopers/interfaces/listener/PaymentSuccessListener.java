@@ -5,9 +5,9 @@ import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.payment.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
@@ -21,7 +21,6 @@ public class PaymentSuccessListener {
     private final PaymentService paymentService;
     private final OrderService orderService;
 
-    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional
     public void handle(PaymentEvent.PaymentCompleted event) {
@@ -32,7 +31,7 @@ public class PaymentSuccessListener {
         orderService.payOrder(order);
 
         Payment payment = paymentService.getPaymentByOrderKey(event.orderKey());
-        payment.updateStatus(com.loopers.domain.payment.PaymentStatus.COMPLETED);
+        payment.updateStatus(PaymentStatus.COMPLETED);
         payment.updateTransactionKey(event.transactionKey());
     }
 }

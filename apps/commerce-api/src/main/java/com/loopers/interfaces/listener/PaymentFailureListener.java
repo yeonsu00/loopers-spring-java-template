@@ -8,11 +8,11 @@ import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderService;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentService;
+import com.loopers.domain.payment.PaymentStatus;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
@@ -28,7 +28,6 @@ public class PaymentFailureListener {
     private final ProductService productService;
     private final CouponService couponService;
 
-    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional
     public void handle(PaymentEvent.PaymentFailed event) {
@@ -47,7 +46,7 @@ public class PaymentFailureListener {
         }
 
         Payment payment = paymentService.getPaymentByOrderKey(event.orderKey());
-        payment.updateStatus(com.loopers.domain.payment.PaymentStatus.FAILED);
+        payment.updateStatus(PaymentStatus.FAILED);
     }
 }
 
