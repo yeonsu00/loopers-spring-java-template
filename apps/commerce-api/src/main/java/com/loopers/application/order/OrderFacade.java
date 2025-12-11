@@ -6,7 +6,6 @@ import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.Delivery;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderService;
-import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.point.PointService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
@@ -16,7 +15,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
@@ -24,7 +23,6 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @RequiredArgsConstructor
 @Component
 public class OrderFacade {
@@ -34,7 +32,7 @@ public class OrderFacade {
     private final OrderService orderService;
     private final CouponService couponService;
     private final PointService pointService;
-    private final PaymentService paymentService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Retryable(
             retryFor = OptimisticLockingFailureException.class,
@@ -53,12 +51,11 @@ public class OrderFacade {
         int originalTotalPrice = 0;
         for (OrderCommand.OrderItemCommand orderItemCommand : createOrderCommand.orderItems()) {
             Product product = productService.getProductById(orderItemCommand.productId());
-
             orderService.createOrderItem(order, product, orderItemCommand.quantity());
             originalTotalPrice += orderService.addTotalPrice(order, product.getPrice().getPrice(), orderItemCommand.quantity());
-
-            productService.reduceStock(product, orderItemCommand.quantity());
         }
+
+        orderService.applyOriginalTotalPrice(order, originalTotalPrice);
 
         Long couponId = createOrderCommand.couponId();
         int discountPrice = 0;
@@ -66,22 +63,19 @@ public class OrderFacade {
             Coupon coupon = couponService.getCouponByIdAndUserId(couponId, user.getId());
             discountPrice = couponService.calculateDiscountPrice(coupon, originalTotalPrice);
             orderService.applyCoupon(order, coupon, discountPrice);
-            couponService.usedCoupon(coupon);
+            eventPublisher.publishEvent(OrderEvent.CouponUsed.from(couponId, user.getId()));
         }
 
-        int finalAmount = originalTotalPrice - discountPrice;
+        orderService.saveOrder(order);
 
         PaymentMethod paymentMethod = createOrderCommand.paymentMethod();
         if (paymentMethod == PaymentMethod.POINT) {
-            pointService.deductPoint(user.getId(), finalAmount);
+            pointService.deductPoint(user.getId(), originalTotalPrice - discountPrice);
         } else if (paymentMethod == PaymentMethod.CARD) {
-            paymentService.createPayment(finalAmount, order.getOrderKey());
+            eventPublisher.publishEvent(OrderEvent.OrderCreated.from(order, user.getLoginId().getId()));
         } else {
             throw new CoreException(ErrorType.BAD_REQUEST, "지원하지 않는 결제 수단입니다.");
         }
-
-        orderService.applyPrice(order, originalTotalPrice, discountPrice);
-        orderService.saveOrder(order);
 
         return OrderInfo.from(order, order.getOrderItems(), delivery, order.getOrderKey());
     }
