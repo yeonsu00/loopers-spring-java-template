@@ -14,7 +14,6 @@ import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -29,7 +28,6 @@ public class PaymentFailureListener {
     private final CouponService couponService;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional
     public void handle(PaymentEvent.PaymentFailed event) {
         log.info("PaymentFailed 이벤트 수신 - 주문 취소 및 복구 처리: orderKey={}, reason={}", event.orderKey(), event.reason());
         Order order = orderService.getOrderByOrderKey(event.orderKey());
