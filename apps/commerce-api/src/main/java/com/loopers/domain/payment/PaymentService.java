@@ -1,6 +1,5 @@
 package com.loopers.domain.payment;
 
-import com.loopers.application.payment.PaymentEvent;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.time.ZonedDateTime;
@@ -41,7 +40,7 @@ public class PaymentService {
         savedPayment.updateCard(card);
     }
 
-    public Payment requestPaymentToPg(Payment payment, String loginId) {
+    public void requestPaymentToPg(Payment payment, String loginId) {
         PaymentClient.PaymentRequest request = new PaymentClient.PaymentRequest(
                 payment.getOrderKey(),
                 payment.getCard().getCardType(),
@@ -50,20 +49,7 @@ public class PaymentService {
                 loginId
         );
 
-        PaymentClient.PaymentResponse paymentResponse = paymentClient.requestPayment(request);
-
-        if (paymentResponse.isSuccess()) {
-            eventPublisher.publishEvent(PaymentEvent.PaymentStatusUpdateRequest.completed(
-                    payment.getOrderKey(),
-                    paymentResponse.transactionKey()
-            ));
-        } else if (paymentResponse.isFail()) {
-            eventPublisher.publishEvent(PaymentEvent.PaymentStatusUpdateRequest.failed(
-                    payment.getOrderKey()
-            ));
-        }
-
-        return payment;
+        paymentClient.requestPayment(request);
     }
 
     public Payment getPendingPaymentByOrderKey(String orderKey) {

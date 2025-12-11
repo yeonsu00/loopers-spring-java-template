@@ -28,21 +28,21 @@ public class PaymentFacade {
 
     @Transactional
     public PaymentInfo requestPayment(PaymentCommand.RequestPaymentCommand command) {
-        Payment savedPayment = paymentService.getPaymentByOrderKey(command.orderKey());
-        paymentService.validatePaymentStatusPending(savedPayment);
+        Payment payment = paymentService.getPaymentByOrderKey(command.orderKey());
+        paymentService.validatePaymentStatusPending(payment);
 
         Card card = paymentService.createCard(command.cardType(), command.cardNo());
-        paymentService.applyCardInfo(savedPayment, card);
+        paymentService.applyCardInfo(payment, card);
 
         User user = userService.getUserByLoginId(command.loginId());
         orderService.validateIsUserOrder(command.orderKey(), user.getId());
 
         try {
-            Payment updatedPayment = paymentService.requestPaymentToPg(savedPayment, command.loginId());
-            return PaymentInfo.from(updatedPayment);
+            paymentService.requestPaymentToPg(payment, command.loginId());
+            return PaymentInfo.from(payment);
         } catch (Exception e) {
             log.error("PG 결제 요청 실패: orderKey={}, error={}", command.orderKey(), e.getMessage(), e);
-            eventPublisher.publishEvent(PaymentEvent.PaymentStatusUpdateRequest.failed(savedPayment.getOrderKey()));
+            eventPublisher.publishEvent(PaymentEvent.PaymentStatusUpdateRequest.failed(payment.getOrderKey()));
             throw new CoreException(ErrorType.INTERNAL_ERROR, "결제 요청에 실패했습니다.");
         }
     }

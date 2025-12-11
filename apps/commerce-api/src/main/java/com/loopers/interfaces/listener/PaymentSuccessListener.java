@@ -3,6 +3,8 @@ package com.loopers.interfaces.listener;
 import com.loopers.application.payment.PaymentEvent;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.payment.Payment;
+import com.loopers.domain.payment.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -16,6 +18,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class PaymentSuccessListener {
 
+    private final PaymentService paymentService;
     private final OrderService orderService;
 
     @Async
@@ -27,7 +30,10 @@ public class PaymentSuccessListener {
 
         Order order = orderService.getOrderByOrderKey(event.orderKey());
         orderService.payOrder(order);
-        orderService.saveOrder(order);
+
+        Payment payment = paymentService.getPaymentByOrderKey(event.orderKey());
+        payment.updateStatus(com.loopers.domain.payment.PaymentStatus.COMPLETED);
+        payment.updateTransactionKey(event.transactionKey());
     }
 }
 

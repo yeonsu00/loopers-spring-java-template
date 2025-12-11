@@ -6,6 +6,8 @@ import com.loopers.domain.coupon.CouponService;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderService;
+import com.loopers.domain.payment.Payment;
+import com.loopers.domain.payment.PaymentService;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 public class PaymentFailureListener {
 
+    private final PaymentService paymentService;
     private final OrderService orderService;
     private final ProductService productService;
     private final CouponService couponService;
@@ -42,6 +45,9 @@ public class PaymentFailureListener {
             Coupon coupon = couponService.getCouponByIdAndUserId(order.getCouponId(), order.getUserId());
             couponService.restoreCoupon(coupon);
         }
+
+        Payment payment = paymentService.getPaymentByOrderKey(event.orderKey());
+        payment.updateStatus(com.loopers.domain.payment.PaymentStatus.FAILED);
     }
 }
 
