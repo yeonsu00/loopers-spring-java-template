@@ -1,10 +1,12 @@
 package com.loopers.domain.payment;
 
+import com.loopers.application.payment.PaymentEvent;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.time.ZonedDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -13,6 +15,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentClient paymentClient;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void createPayment(Integer amount, String orderKey) {
         Payment payment = Payment.createPayment(amount, orderKey);
@@ -50,10 +53,14 @@ public class PaymentService {
         PaymentClient.PaymentResponse paymentResponse = paymentClient.requestPayment(request);
 
         if (paymentResponse.isSuccess()) {
-            payment.updateStatus(PaymentStatus.COMPLETED);
-            payment.updateTransactionKey(paymentResponse.transactionKey());
+            eventPublisher.publishEvent(PaymentEvent.PaymentStatusUpdateRequest.completed(
+                    payment.getOrderKey(),
+                    paymentResponse.transactionKey()
+            ));
         } else if (paymentResponse.isFail()) {
-            payment.updateStatus(PaymentStatus.FAILED);
+            eventPublisher.publishEvent(PaymentEvent.PaymentStatusUpdateRequest.failed(
+                    payment.getOrderKey()
+            ));
         }
 
         return payment;

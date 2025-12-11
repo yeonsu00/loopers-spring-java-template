@@ -30,6 +30,19 @@ public class ProductService {
         productRepository.saveProduct(product);
     }
 
+    /**
+     * 재고를 차감합니다. 재고가 부족한 경우 CoreException을 던집니다.
+     * @param productId 상품 ID
+     * @param quantity 차감할 수량
+     * @throws CoreException 재고가 부족한 경우
+     */
+    @Transactional
+    public void decreaseStock(Long productId, Integer quantity) {
+        Product product = getProductById(productId);
+        product.reduceStock(quantity);
+        productRepository.saveProduct(product);
+    }
+
     public void restoreStock(Product product, Integer quantity) {
         product.restoreStock(quantity);
     }
