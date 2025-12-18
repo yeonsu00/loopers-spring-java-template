@@ -54,18 +54,20 @@ public class ProductService {
     }
 
     @Transactional
-    public void increaseLikeCount(Long productId) {
+    public Product increaseLikeCount(Long productId) {
         Product product = productRepository.findProductById(productId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
         product.increaseLikeCount();
         productRepository.saveProduct(product);
+        return product;
     }
 
     @Transactional
-    public void decreaseLikeCount(Long productId) {
+    public Product decreaseLikeCount(Long productId) {
         Product product = productRepository.findProductById(productId)
                 .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "상품을 찾을 수 없습니다."));
         product.decreaseLikeCount();
         productRepository.saveProduct(product);
+        return product;
     }
 }
