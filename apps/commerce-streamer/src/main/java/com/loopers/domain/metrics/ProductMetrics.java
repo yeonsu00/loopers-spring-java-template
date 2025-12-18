@@ -62,5 +62,11 @@ public class ProductMetrics extends BaseEntity {
     public void incrementViewCount() {
         this.viewCount++;
     }
+
+    public void incrementSalesCount(Integer quantity) {
+        if (quantity != null && quantity > 0) {
+            this.salesCount += quantity;
+        }
+    }
 }
 

@@ -2,6 +2,7 @@ package com.loopers.application.kafka;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public interface KafkaEvent {
@@ -48,18 +49,28 @@ public interface KafkaEvent {
                 Long userId,
                 Long orderId,
                 Integer totalPrice,
+                List<OrderItemInfo> orderItems,
                 ZonedDateTime timestamp
         ) implements OrderEvent {
-            public static OrderPaid from(String orderKey, Long userId, Long orderId, Integer totalPrice) {
+            public static OrderPaid from(String orderKey, Long userId, Long orderId, Integer totalPrice, List<OrderItemInfo> orderItems) {
                 return new OrderPaid(
                         KafkaEvent.generateEventId("order-paid", orderKey),
                         orderKey,
                         userId,
                         orderId,
                         totalPrice,
+                        orderItems,
                         ZonedDateTime.now()
                 );
             }
+        }
+
+        record OrderItemInfo(
+                Long productId,
+                String productName,
+                Integer price,
+                Integer quantity
+        ) {
         }
     }
 

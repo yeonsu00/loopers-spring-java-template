@@ -42,5 +42,17 @@ public class ProductMetricsService {
         metrics.incrementViewCount();
         productMetricsRepository.saveProductMetrics(metrics);
     }
+
+    @Transactional
+    public void incrementSalesCount(Long productId, Integer quantity) {
+        ProductMetrics metrics = productMetricsRepository.findByProductId(productId)
+                .orElseGet(() -> {
+                    ProductMetrics newMetrics = ProductMetrics.create(productId);
+                    productMetricsRepository.saveProductMetrics(newMetrics);
+                    return newMetrics;
+                });
+        metrics.incrementSalesCount(quantity);
+        productMetricsRepository.saveProductMetrics(metrics);
+    }
 }
 

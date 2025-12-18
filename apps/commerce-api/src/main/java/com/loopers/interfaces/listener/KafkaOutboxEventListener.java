@@ -6,6 +6,7 @@ import com.loopers.application.order.OrderEvent;
 import com.loopers.application.product.ProductEvent;
 import com.loopers.application.userbehavior.UserBehaviorEvent;
 import com.loopers.domain.outbox.OutboxService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,12 +33,22 @@ public class KafkaOutboxEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleOrderPaid(com.loopers.application.order.OrderEvent.OrderPaid event) {
+    public void handleOrderPaid(OrderEvent.OrderPaid event) {
+        List<KafkaEvent.OrderEvent.OrderItemInfo> orderItemInfos = event.orderItems().stream()
+                .map(item -> new KafkaEvent.OrderEvent.OrderItemInfo(
+                        item.productId(),
+                        item.productName(),
+                        item.price(),
+                        item.quantity()
+                ))
+                .toList();
+        
         KafkaEvent.OrderEvent.OrderPaid kafkaEvent = KafkaEvent.OrderEvent.OrderPaid.from(
                 event.orderKey(),
                 event.userId(),
                 event.orderId(),
-                event.totalPrice()
+                event.totalPrice(),
+                orderItemInfos
         );
         outboxService.saveOutbox("order-paid-events", event.orderKey(), kafkaEvent);
     }
