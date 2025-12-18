@@ -19,6 +19,8 @@ public class OrderEvent {
     public record OrderCreated(
             String loginId,
             String orderKey,
+            Long orderId,
+            Long userId,
             Integer originalTotalPrice,
             Integer discountPrice
     ) {
@@ -26,8 +28,26 @@ public class OrderEvent {
             return new OrderCreated(
                     loginId,
                     order.getOrderKey(),
+                    order.getId(),
+                    order.getUserId(),
                     order.getOriginalTotalPrice(),
                     order.getDiscountPrice()
+            );
+        }
+    }
+
+    public record OrderPaid(
+            String orderKey,
+            Long orderId,
+            Long userId,
+            Integer totalPrice
+    ) {
+        public static OrderPaid from(Order order) {
+            return new OrderPaid(
+                    order.getOrderKey(),
+                    order.getId(),
+                    order.getUserId(),
+                    order.getOriginalTotalPrice() - (order.getDiscountPrice() != null ? order.getDiscountPrice() : 0)
             );
         }
     }
