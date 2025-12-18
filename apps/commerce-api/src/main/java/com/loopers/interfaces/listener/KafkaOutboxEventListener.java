@@ -21,7 +21,7 @@ public class KafkaOutboxEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderCreated(OrderEvent.OrderCreated event) {
-        KafkaEvent.OrderCreated kafkaEvent = KafkaEvent.OrderCreated.from(
+        KafkaEvent.OrderEvent.OrderCreated kafkaEvent = KafkaEvent.OrderEvent.OrderCreated.from(
                 event.orderKey(),
                 event.userId(),
                 event.orderId(),
@@ -32,8 +32,8 @@ public class KafkaOutboxEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleOrderPaid(OrderEvent.OrderPaid event) {
-        KafkaEvent.OrderPaid kafkaEvent = KafkaEvent.OrderPaid.from(
+    public void handleOrderPaid(com.loopers.application.order.OrderEvent.OrderPaid event) {
+        KafkaEvent.OrderEvent.OrderPaid kafkaEvent = KafkaEvent.OrderEvent.OrderPaid.from(
                 event.orderKey(),
                 event.userId(),
                 event.orderId(),
@@ -44,7 +44,7 @@ public class KafkaOutboxEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleLikeRecorded(LikeEvent.LikeRecorded event) {
-        KafkaEvent.ProductLiked kafkaEvent = KafkaEvent.ProductLiked.from(
+        KafkaEvent.ProductEvent.ProductLiked kafkaEvent = KafkaEvent.ProductEvent.ProductLiked.from(
                 event.productId(),
                 event.userId()
         );
@@ -53,7 +53,7 @@ public class KafkaOutboxEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleLikeCancelled(LikeEvent.LikeCancelled event) {
-        KafkaEvent.ProductUnliked kafkaEvent = KafkaEvent.ProductUnliked.from(
+        KafkaEvent.ProductEvent.ProductUnliked kafkaEvent = KafkaEvent.ProductEvent.ProductUnliked.from(
                 event.productId(),
                 event.userId()
         );
@@ -62,7 +62,7 @@ public class KafkaOutboxEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleProductViewed(UserBehaviorEvent.ProductViewed event) {
-        KafkaEvent.ProductViewed kafkaEvent = KafkaEvent.ProductViewed.from(
+        KafkaEvent.ProductEvent.ProductViewed kafkaEvent = KafkaEvent.ProductEvent.ProductViewed.from(
                 event.productId(),
                 event.userId()
         );
@@ -71,7 +71,7 @@ public class KafkaOutboxEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleStockDepleted(ProductEvent.StockDepleted event) {
-        KafkaEvent.ProductStockDepleted kafkaEvent = KafkaEvent.ProductStockDepleted.from(
+        KafkaEvent.ProductEvent.ProductStockDepleted kafkaEvent = KafkaEvent.ProductEvent.ProductStockDepleted.from(
                 event.productId(),
                 event.remainingStock()
         );
