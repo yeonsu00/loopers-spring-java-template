@@ -1,6 +1,7 @@
 package com.loopers.domain.eventhandled;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +18,8 @@ public class EventHandledService {
 
     @Transactional
     public void markAsHandled(String eventId, String eventType, String aggregateKey) {
-        if (!eventHandledRepository.existsByEventId(eventId)) {
-            EventHandled eventHandled = EventHandled.create(eventId, eventType, aggregateKey);
-            eventHandledRepository.saveEventHandled(eventHandled);
-        }
+        EventHandled eventHandled = EventHandled.create(eventId, eventType, aggregateKey);
+        eventHandledRepository.saveEventHandled(eventHandled);
     }
 }
 

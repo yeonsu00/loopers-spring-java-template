@@ -1,7 +1,7 @@
 package com.loopers.interfaces.consumer;
 
 import com.loopers.application.kafka.KafkaEvent;
-import com.loopers.confg.kafka.KafkaConfig;
+import com.loopers.config.kafka.KafkaConfig;
 import com.loopers.domain.cache.ProductCacheService;
 import com.loopers.domain.eventhandled.EventHandledService;
 import com.loopers.domain.metrics.ProductMetricsService;
