@@ -3,6 +3,7 @@ package com.loopers.application.kafka;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 public interface KafkaEvent {
@@ -10,7 +11,7 @@ public interface KafkaEvent {
     ZonedDateTime timestamp();
 
     static String generateEventId(String eventType, String aggregateKey) {
-        return String.format("%s-%s-%d", eventType, aggregateKey, System.currentTimeMillis());
+        return String.format("%s-%s-%s", eventType, aggregateKey, UUID.randomUUID());
     }
 
     sealed interface OrderEvent extends KafkaEvent permits

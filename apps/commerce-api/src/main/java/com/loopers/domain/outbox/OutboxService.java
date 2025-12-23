@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -18,7 +19,7 @@ public class OutboxService {
     private static final int MAX_RETRIES = 3;
 
     private final OutboxRepository outboxRepository;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -36,19 +37,16 @@ public class OutboxService {
         List<Outbox> pendingOutboxes = outboxRepository.findPendingOutboxes(batchSize);
 
         for (Outbox outbox : pendingOutboxes) {
-            kafkaTemplate
-                    .send(
-                            outbox.getTopic(),
-                            outbox.getPartitionKey(),
-                            outbox.getPayload()
-                    )
-                    .whenComplete((result, exception) -> {
-                        if (exception == null) {
-                            outboxRepository.markAsPublished(outbox.getId());
-                        } else {
-                            outboxRepository.markAsFailed(outbox.getId(), exception.getMessage());
-                        }
-                    });
+            try {
+                kafkaTemplate.send(
+                        outbox.getTopic(),
+                        outbox.getPartitionKey(),
+                        outbox.getPayload()
+                ).get();
+                outboxRepository.markAsPublished(outbox.getId());
+            } catch (Exception e) {
+                outboxRepository.markAsFailed(outbox.getId(), e.getMessage());
+            }
         }
     }
 
@@ -62,19 +60,16 @@ public class OutboxService {
                 continue;
             }
 
-            kafkaTemplate
-                    .send(
-                            outbox.getTopic(),
-                            outbox.getPartitionKey(),
-                            outbox.getPayload()
-                    )
-                    .whenComplete((result, exception) -> {
-                        if (exception == null) {
-                            outboxRepository.markAsPublished(outbox.getId());
-                        } else {
-                            outboxRepository.markAsFailed(outbox.getId(), exception.getMessage());
-                        }
-                    });
+            try {
+                kafkaTemplate.send(
+                        outbox.getTopic(),
+                        outbox.getPartitionKey(),
+                        outbox.getPayload()
+                ).get(5, TimeUnit.SECONDS);
+                outboxRepository.markAsPublished(outbox.getId());
+            } catch (Exception e) {
+                outboxRepository.markAsFailed(outbox.getId(), e.getMessage());
+            }
         }
     }
 }
