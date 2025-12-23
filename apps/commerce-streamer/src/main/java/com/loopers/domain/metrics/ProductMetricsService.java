@@ -1,34 +1,42 @@
 package com.loopers.domain.metrics;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class ProductMetricsService {
 
     private final ProductMetricsRepository productMetricsRepository;
 
     @Transactional
     public void incrementLikeCount(Long productId) {
-        ProductMetrics metrics = productMetricsRepository.findByProductId(productId)
-                .orElseGet(() -> {
-                    ProductMetrics newMetrics = ProductMetrics.create(productId);
-                    productMetricsRepository.saveProductMetrics(newMetrics);
-                    return newMetrics;
-                });
-        metrics.incrementLikeCount();
-        productMetricsRepository.saveProductMetrics(metrics);
+        int updatedRows = productMetricsRepository.incrementLikeCount(productId);
+
+        if (updatedRows == 0) {
+            try {
+                ProductMetrics newMetrics = ProductMetrics.create(productId);
+                newMetrics.incrementLikeCount();
+                productMetricsRepository.saveProductMetrics(newMetrics);
+            } catch (DataIntegrityViolationException e) {
+                productMetricsRepository.incrementLikeCount(productId);
+            }
+        }
     }
 
     @Transactional
     public void decrementLikeCount(Long productId) {
-        productMetricsRepository.findByProductId(productId)
-                .ifPresent(metrics -> {
-                    metrics.decrementLikeCount();
-                    productMetricsRepository.saveProductMetrics(metrics);
+        ProductMetrics productMetrics = productMetricsRepository.findByProductId(productId)
+                .orElseGet(() -> {
+                    log.warn("좋아요 취소 시 메트릭이 존재하지 않음: productId={}", productId);
+                    return ProductMetrics.create(productId);
                 });
+        productMetrics.decrementLikeCount();
+        productMetricsRepository.saveProductMetrics(productMetrics);
     }
 
     @Transactional

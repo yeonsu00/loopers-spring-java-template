@@ -21,5 +21,10 @@ public class ProductMetricsRepositoryImpl implements ProductMetricsRepository {
     public Optional<ProductMetrics> findByProductId(Long productId) {
         return productMetricsJpaRepository.findByProductId(productId);
     }
+
+    @Override
+    public int incrementLikeCount(Long productId) {
+        return productMetricsJpaRepository.incrementLikeCount(productId);
+    }
 }
 
