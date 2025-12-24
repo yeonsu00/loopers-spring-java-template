@@ -1,8 +1,11 @@
 package com.loopers.domain.ranking;
 
 import java.time.Duration;
+import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.connection.zset.Aggregate;
+import org.springframework.data.redis.connection.zset.Weights;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
@@ -45,26 +48,11 @@ public class RankingService {
 
         ZSetOperations<String, String> zSetOps = redisTemplateMaster.opsForZSet();
 
-        var entries = zSetOps.reverseRangeWithScores(fromKey, 0, -1);
+        double weight = RankingWeight.CARRY_OVER.getWeight();
+        zSetOps.unionAndStore(fromKey, Collections.emptyList(), toKey,
+                Aggregate.SUM, Weights.of(weight));
 
-        if (entries == null || entries.isEmpty()) {
-            log.info("carry-over할 데이터가 없음: fromDate={}", fromDate);
-            return;
-        }
-
-        for (ZSetOperations.TypedTuple<String> entry : entries) {
-            String productId = entry.getValue();
-            Double score = entry.getScore();
-
-            if (productId == null || score == null || score <= 0) {
-                continue;
-            }
-
-            double carryOverScore = score * RankingWeight.CARRY_OVER.getWeight();
-            zSetOps.incrementScore(toKey, productId, carryOverScore);
-        }
-
-        redisTemplateMaster.expire(toKey, java.time.Duration.ofSeconds(TTL_SECONDS));
+        redisTemplateMaster.expire(toKey, Duration.ofSeconds(TTL_SECONDS));
 
         log.info("랭킹 점수 carry-over 완료: fromDate={}, toDate={}", fromDate, toDate);
     }
