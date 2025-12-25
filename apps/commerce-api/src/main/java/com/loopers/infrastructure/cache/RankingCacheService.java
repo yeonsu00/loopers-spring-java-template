@@ -59,11 +59,12 @@ public class RankingCacheService {
         return rankingItems;
     }
 
-    public Long getProductRank(LocalDate date, String productId) {
+    public Long getProductRank(LocalDate date, Long productId) {
         String key = getRankingKey(date);
         ZSetOperations<String, String> zSetOps = redisTemplateMaster.opsForZSet();
 
-        Long rank = zSetOps.reverseRank(key, productId);
+        String productIdStr = String.valueOf(productId);
+        Long rank = zSetOps.reverseRank(key, productIdStr);
 
         if (rank == null) {
             log.debug("해당 상품이 랭킹에 존재하지 않음: key={}, productId={}", key, productId);
