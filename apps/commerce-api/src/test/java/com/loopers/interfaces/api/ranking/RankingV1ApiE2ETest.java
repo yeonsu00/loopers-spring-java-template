@@ -96,7 +96,7 @@ class RankingV1ApiE2ETest extends IntegrationTest {
             zSetOps.add(key, String.valueOf(product1.getId()), 100.0);
             zSetOps.add(key, String.valueOf(product2.getId()), 50.0);
 
-            String url = ENDPOINT_RANKING + "?date=" + date.format(DATE_FORMATTER) + "&page=1&size=20";
+            String url = ENDPOINT_RANKING + "?date=" + date.format(DATE_FORMATTER) + "&type=DAILY&page=1&size=20";
 
             // act
             ResponseEntity<ApiResponse<RankingListResponse>> response = testRestTemplate.exchange(
@@ -140,7 +140,7 @@ class RankingV1ApiE2ETest extends IntegrationTest {
         void returnsEmptyList_whenNoDataExists() {
             // arrange
             LocalDate date = LocalDate.now();
-            String url = ENDPOINT_RANKING + "?date=" + date.format(DATE_FORMATTER) + "&page=1&size=20";
+            String url = ENDPOINT_RANKING + "?date=" + date.format(DATE_FORMATTER) + "&type=DAILY&page=1&size=20";
 
             // act
             ResponseEntity<ApiResponse<RankingListResponse>> response = testRestTemplate.exchange(
@@ -181,7 +181,7 @@ class RankingV1ApiE2ETest extends IntegrationTest {
             zSetOps.add(key, String.valueOf(product3.getId()), 30.0);
 
             // act - 첫 페이지
-            String url1 = ENDPOINT_RANKING + "?date=" + date.format(DATE_FORMATTER) + "&page=1&size=2";
+            String url1 = ENDPOINT_RANKING + "?date=" + date.format(DATE_FORMATTER) + "&type=DAILY&page=1&size=2";
             ResponseEntity<ApiResponse<RankingListResponse>> response1 = testRestTemplate.exchange(
                     url1,
                     HttpMethod.GET,
@@ -197,7 +197,7 @@ class RankingV1ApiE2ETest extends IntegrationTest {
             assertThat(page1.rankings().get(1).productId()).isEqualTo(product2.getId());
 
             // act - 두 번째 페이지
-            String url2 = ENDPOINT_RANKING + "?date=" + date.format(DATE_FORMATTER) + "&page=2&size=2";
+            String url2 = ENDPOINT_RANKING + "?date=" + date.format(DATE_FORMATTER) + "&type=DAILY&page=2&size=2";
             ResponseEntity<ApiResponse<RankingListResponse>> response2 = testRestTemplate.exchange(
                     url2,
                     HttpMethod.GET,

@@ -6,7 +6,6 @@ import com.loopers.application.ranking.RankingInfo;
 import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -26,7 +25,7 @@ public class RankingV1Controller implements RankingV1ApiSpec {
     @Override
     public ApiResponse<RankingV1Dto.RankingListResponse> getRanking(
             @RequestParam @DateTimeFormat(pattern = "yyyyMMdd") LocalDate date,
-            @RequestParam @NotNull String type,
+            @RequestParam String type,
             @RequestParam(required = false, defaultValue = "1") Integer page,
             @RequestParam(required = false, defaultValue = "20") Integer size
     ) {
