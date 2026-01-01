@@ -14,6 +14,8 @@ import java.util.stream.IntStream;
 public class RankingService {
 
     private final RankingCacheService rankingCacheService;
+    private final MvProductRankWeeklyRepository mvProductRankWeeklyRepository;
+    private final MvProductRankMonthlyRepository mvProductRankMonthlyRepository;
 
     public List<Ranking> getDailyRanking(LocalDate date, int page, int size) {
         long start = (long) (page - 1) * size;
@@ -35,11 +37,51 @@ public class RankingService {
     }
 
     public List<Ranking> getWeeklyRanking(LocalDate date, int page, int size) {
-        return new ArrayList<>();
+        RankingPeriod period = RankingPeriod.ofWeek(date);
+        List<MvProductRankWeekly> weeklyRanks = mvProductRankWeeklyRepository
+                .findByPeriodOrderByRankingAsc(
+                        period.startDate(),
+                        period.endDate(),
+                        page,
+                        size
+                );
+
+        if (weeklyRanks.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return weeklyRanks.stream()
+                .filter(rank -> rank.getRanking() != null)
+                .map(rank -> new Ranking(
+                        rank.getProductId(),
+                        rank.getRanking().longValue(),
+                        rank.getScore()
+                ))
+                .toList();
     }
 
     public List<Ranking> getMonthlyRanking(LocalDate date, int page, int size) {
-        return new ArrayList<>();
+        RankingPeriod period = RankingPeriod.ofMonth(date);
+        List<MvProductRankMonthly> monthlyRanks = mvProductRankMonthlyRepository
+                .findByPeriodOrderByRankingAsc(
+                        period.startDate(),
+                        period.endDate(),
+                        page,
+                        size
+                );
+
+        if (monthlyRanks.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return monthlyRanks.stream()
+                .filter(rank -> rank.getRanking() != null)
+                .map(rank -> new Ranking(
+                        rank.getProductId(),
+                        rank.getRanking().longValue(),
+                        rank.getScore()
+                ))
+                .toList();
     }
 }
 
