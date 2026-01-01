@@ -15,7 +15,7 @@ public class RankingService {
 
     private final RankingCacheService rankingCacheService;
 
-    public List<Ranking> getRanking(LocalDate date, int page, int size) {
+    public List<Ranking> getDailyRanking(LocalDate date, int page, int size) {
         long start = (long) (page - 1) * size;
         long end = start + size - 1;
 
@@ -32,6 +32,14 @@ public class RankingService {
                     return new Ranking(item.productId(), rank, item.score());
                 })
                 .toList();
+    }
+
+    public List<Ranking> getWeeklyRanking(LocalDate date, int page, int size) {
+        return new ArrayList<>();
+    }
+
+    public List<Ranking> getMonthlyRanking(LocalDate date, int page, int size) {
+        return new ArrayList<>();
     }
 }
 

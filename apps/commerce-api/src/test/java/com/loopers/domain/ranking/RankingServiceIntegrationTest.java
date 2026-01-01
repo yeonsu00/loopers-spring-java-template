@@ -54,7 +54,7 @@ class RankingServiceIntegrationTest extends IntegrationTest {
         void returnsRankings_whenDataExists() {
             // arrange
             LocalDate date = LocalDate.now();
-            String key = getRankingKey(date);
+            String key = getDailyRankingKey(date);
             ZSetOperations<String, String> zSetOps = redisTemplateMaster.opsForZSet();
 
             zSetOps.add(key, "1", 100.0);
@@ -62,7 +62,7 @@ class RankingServiceIntegrationTest extends IntegrationTest {
             zSetOps.add(key, "3", 30.0);
 
             // act
-            List<Ranking> result = rankingService.getRanking(date, 1, 20);
+            List<Ranking> result = rankingService.getDailyRanking(date, 1, 20);
 
             // assert
             assertThat(result).hasSize(3);
@@ -82,7 +82,7 @@ class RankingServiceIntegrationTest extends IntegrationTest {
         void returnsPaginatedResults() {
             // arrange
             LocalDate date = LocalDate.now();
-            String key = getRankingKey(date);
+            String key = getDailyRankingKey(date);
             ZSetOperations<String, String> zSetOps = redisTemplateMaster.opsForZSet();
 
             zSetOps.add(key, "1", 100.0);
@@ -92,7 +92,7 @@ class RankingServiceIntegrationTest extends IntegrationTest {
             zSetOps.add(key, "5", 60.0);
 
             // act - 첫 페이지
-            List<Ranking> page1 = rankingService.getRanking(date, 1, 2);
+            List<Ranking> page1 = rankingService.getDailyRanking(date, 1, 2);
 
             // assert
             assertThat(page1).hasSize(2);
@@ -102,7 +102,7 @@ class RankingServiceIntegrationTest extends IntegrationTest {
             assertThat(page1.get(1).rank()).isEqualTo(2L);
 
             // act - 두 번째 페이지
-            List<Ranking> page2 = rankingService.getRanking(date, 2, 2);
+            List<Ranking> page2 = rankingService.getDailyRanking(date, 2, 2);
 
             // assert
             assertThat(page2).hasSize(2);
@@ -112,7 +112,7 @@ class RankingServiceIntegrationTest extends IntegrationTest {
             assertThat(page2.get(1).rank()).isEqualTo(4L);
 
             // act - 세 번째 페이지
-            List<Ranking> page3 = rankingService.getRanking(date, 3, 2);
+            List<Ranking> page3 = rankingService.getDailyRanking(date, 3, 2);
 
             // assert
             assertThat(page3).hasSize(1);
@@ -127,7 +127,7 @@ class RankingServiceIntegrationTest extends IntegrationTest {
             LocalDate date = LocalDate.now();
 
             // act
-            List<Ranking> result = rankingService.getRanking(date, 1, 20);
+            List<Ranking> result = rankingService.getDailyRanking(date, 1, 20);
 
             // assert
             assertThat(result).isEmpty();
@@ -138,13 +138,13 @@ class RankingServiceIntegrationTest extends IntegrationTest {
         void startsRankFromOne() {
             // arrange
             LocalDate date = LocalDate.now();
-            String key = getRankingKey(date);
+            String key = getDailyRankingKey(date);
             ZSetOperations<String, String> zSetOps = redisTemplateMaster.opsForZSet();
 
             zSetOps.add(key, "1", 100.0);
 
             // act
-            List<Ranking> result = rankingService.getRanking(date, 1, 20);
+            List<Ranking> result = rankingService.getDailyRanking(date, 1, 20);
 
             // assert
             assertThat(result).hasSize(1);
@@ -152,7 +152,7 @@ class RankingServiceIntegrationTest extends IntegrationTest {
         }
     }
 
-    private String getRankingKey(LocalDate date) {
+    private String getDailyRankingKey(LocalDate date) {
         return RANKING_KEY_PREFIX + date.format(DATE_FORMATTER);
     }
 }
